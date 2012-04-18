@@ -7,6 +7,7 @@ public class Deck {
 	private Random random = new Random();
 	private LinkedHashMap<String, Card> cards = new LinkedHashMap<String, Card>();
 	private LinkedHashMap<String, Card> unusedCards;
+	private LinkedHashMap<String, Card> reservedCards = new LinkedHashMap<String, Card>();
 	
 	private Deck() {
 		String[] suits = {"s", "c", "h", "d"};
@@ -43,11 +44,26 @@ public class Deck {
 	}
 	
 	public Card reserveCard(String s) {
-		cards.remove(s);
+		reservedCards.put(s, cards.remove(s));
 		return drawCard(s);
 	}
 	
-	public Card[] getCards() {
-		return (Card[]) unusedCards.values().toArray();
+	public Card unreserveCard(String s) {
+		cards.put(s, reservedCards.remove(s));
+		return unusedCards.put(s, cards.get(s));
+	}
+	
+	public String[] listCards() {
+		String[] strings = new String[unusedCards.size()];
+		Card[] ca = new Card[unusedCards.size()];
+		unusedCards.values().toArray(ca);
+		int i=0;
+		
+		for(Card c : ca) {
+			strings[i] = c.toString();
+			i++;
+		}
+		
+		return strings;
 	}
 }

@@ -2,12 +2,11 @@ package com.sgrif.poker;
 
 import java.util.*;
 
-public class Hand implements Comparable<Hand>, Cloneable {
+public class Hand implements Comparable<Hand> {
 	private ArrayList<Card> cards = new ArrayList<Card>();
 	private Integer ranking_value = 0;
 	private String description = "";
 	private String name = "";
-	private Card[] used;
 	
 	public Hand(String n) {
 		name = n;
@@ -23,12 +22,23 @@ public class Hand implements Comparable<Hand>, Cloneable {
 		cards.add(c);
 	}
 	
-	public void discardCard(Card c) {
-		cards.remove(c);
+	public void discardCard(String s) {
+		Card r = null;
+		for(Card c : cards) {
+			if(c.toString().equals(s)) r = c;
+		}
+		if(r != null) cards.remove(r);
 	}
 	
+	/*
 	public ArrayList<Card> getCards() {
-		return cards;
+		ArrayList<Card> c = new ArrayList<Card>();
+		c.addAll(cards);
+		return c;
+	}*/
+	
+	public Integer size() {
+		return cards.size();
 	}
 	
 	public String toString() {
@@ -37,7 +47,6 @@ public class Hand implements Comparable<Hand>, Cloneable {
 		for(Card card : cards) {
 			s += card.toString();
 		}
-		s += " " + ranking_value + " " + Arrays.toString(used);
 		return s;
 	}
 	
@@ -50,6 +59,8 @@ public class Hand implements Comparable<Hand>, Cloneable {
 	}
 	
 	public Integer determineValue(ArrayList<Card> board) {
+		ranking_value = 0;
+		description = "";
 		ArrayList<Card> working = new ArrayList<Card>();
 		working.addAll(cards);
 		working.addAll(board);
@@ -66,7 +77,6 @@ public class Hand implements Comparable<Hand>, Cloneable {
 			if(x > ranking_value) {
 				ranking_value = x;
 				description = determineDescription(hand);
-				used = hand.clone();
 			}
 		} else {
 			for (int i = 0; i < working.size(); i++) {
@@ -83,8 +93,8 @@ public class Hand implements Comparable<Hand>, Cloneable {
 	private Integer getValue(Card[] hand) {
 		Card[] sorted = hand.clone();
 		Arrays.sort(sorted);
-		Card c;
-		Card[] ca;
+		Card c = null;
+		Card[] ca = null;
 		
 		if((c = hasRoyalFlush(sorted)) != null) {
 			return parseHexValue(c, sorted, "a");
@@ -271,16 +281,12 @@ public class Hand implements Comparable<Hand>, Cloneable {
 
 	@Override
 	public int compareTo(Hand arg0) {
-		return arg0.ranking_value - ranking_value;
+		return arg0.getValue() - getValue();
 	}
 	
-	@Override
-	public Object clone() {
-		try {
-			return super.clone();
-		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
-			return null;
-		}
+	public Hand clone() {
+		Hand h = new Hand(name);
+		h.cards.addAll(cards);
+		return h;
 	}
 }

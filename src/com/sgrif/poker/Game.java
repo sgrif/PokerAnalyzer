@@ -9,6 +9,8 @@ public class Game {
 	private ArrayList<Card> starting_board = new ArrayList<Card>();
 	private ArrayList<Card> board = new ArrayList<Card>();
 	private ArrayList<Hand> opponents = new ArrayList<Hand>();
+	private int wins = 0;
+	private int losses = 0;
 	
 	public Game(Integer num_opponents, String h, String b) {		
 		for(int x = 0; x < 1; x++) { // Create an empty hand for each opponent
@@ -26,34 +28,104 @@ public class Game {
 		}
 	}
 	
+	public Game(Integer num_oppponents, String h) {
+		this(num_oppponents, h, "");
+	}
+	
+	@SuppressWarnings("unchecked")
 	public float enumerateAll() {
-		int wins = 0;
-		int losses = 0;
-		Card[] deck = Deck.getTheDeck().getCards();
-		Hand hero = (Hand) starting_hero.clone();
-		Hand opponent = new Hand("Opponent");
-		ArrayList<Card> board = (ArrayList<Card>) starting_board.clone();
+		hero = (Hand) starting_hero.clone();
+		board = (ArrayList<Card>) starting_board.clone();
+		String[] useableCards = deck.listCards();
+		BitSet cardsUsed = new BitSet();
+		
+		enumerateHero(hero.size(), useableCards, cardsUsed);
 		
 		return (float) wins/(wins+losses);
 	}
 	
-	private void reset(Hand h, Hand o, ArrayList<Card> b) {
-		deck.shuffle();
-		board = b;
-		hero = h;
-		for(Hand opponent : opponents) {
-			opponent = o;
+	private void enumerateHero(int from, String[] useableCards, BitSet cardsUsed) {		
+		if (from == 2) {
+			enumerateOpponents(opponents.get(0).size(), 0, useableCards, cardsUsed);
+		} else {
+			for (int i = 0; i < useableCards.length; i++) {
+				if (!cardsUsed.get(i)) {
+					hero.addCard(deck.reserveCard(useableCards[i]));
+					cardsUsed.set(i);
+					enumerateHero(from+1, useableCards, cardsUsed);
+					hero.discardCard(useableCards[i]);
+					deck.unreserveCard(useableCards[i]);
+					cardsUsed.clear(i);
+				}
+			}
 		}
+	}
+	
+	private void enumerateOpponents(int from, int oppid, String[] useableCards, BitSet cardsUsed) {
+		if(oppid == opponents.size()) {
+			enumerateBoard(board.size(), useableCards, cardsUsed);
+		} else {
+			if (from == 2) {
+				enumerateOpponents(from, oppid+1, useableCards, cardsUsed);
+			} else {
+				for (int i = 0; i < useableCards.length; i++) {
+					if (!cardsUsed.get(i)) {
+						opponents.get(oppid).addCard(deck.reserveCard(useableCards[i]));
+						cardsUsed.set(i);
+						enumerateOpponents(from+1, oppid, useableCards, cardsUsed);
+						opponents.get(oppid).discardCard(useableCards[i]);
+						deck.unreserveCard(useableCards[i]);
+						cardsUsed.clear(i);
+					}
+				}
+			}
+		}
+	}
+	
+	private void enumerateBoard(int from, String[] useableCards, BitSet cardsUsed) {		
+		if (from == 5) {
+			Hand winner = determineWinner();
+			if(winner.equals(hero)) {
+				wins++;
+			} else {
+				losses++;
+			}
+		} else {
+			for (int i = 0; i < useableCards.length; i++) {
+				if (!cardsUsed.get(i)) {
+					board.add(deck.reserveCard(useableCards[i]));
+					cardsUsed.set(i);
+					enumerateBoard(from+1, useableCards, cardsUsed);
+					Card r = null;
+					for(Card c : board) {
+						if(c.toString().equals(useableCards[i]));
+						r = c;
+					}
+					board.remove(r);
+					deck.unreserveCard(useableCards[i]);
+					cardsUsed.clear(i);
+				}
+			}
+		}
+	}
+	
+	private Hand determineWinner() {
+		ArrayList<Hand> players = new ArrayList<Hand>();
+		players.add(hero);
+		players.addAll(opponents);
+		for(Hand player : players) player.determineValue(board);
+		Collections.sort(players);
+		return players.get(0);
 	}
 	
 	@SuppressWarnings("unchecked")
 	private boolean run() {
-		for(int x = hero.getCards().size(); x < 2; x++) {
+		for(int x = hero.size(); x < 2; x++) {
 			hero.addCard(deck.drawCard());
 		}
 		
 		for(Hand opponent : opponents) {
-			for(int x = opponent.getCards().size(); x < 2; x++) {
+			for(int x = opponent.size(); x < 2; x++) {
 				opponent.addCard(deck.drawCard());
 			}
 		}
