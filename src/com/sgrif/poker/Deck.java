@@ -1,69 +1,42 @@
 package com.sgrif.poker;
 
-import java.util.*;
-
 public class Deck {
-	private static Deck the_deck;
-	private Random random = new Random();
-	private LinkedHashMap<String, Card> cards = new LinkedHashMap<String, Card>();
-	private LinkedHashMap<String, Card> unusedCards;
-	private LinkedHashMap<String, Card> reservedCards = new LinkedHashMap<String, Card>();
+	public static final int DECK_SIZE	= 52;
 	
-	private Deck() {
-		String[] suits = {"s", "c", "h", "d"};
-		String[] values = {"2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A" };
+	public static final int[] PRIMES	= {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41};
+										// 2, 3, 4, 5, 66, 77, 88, 99, TT, JJ, QQ, KK, AA
+										// d, h, c, s
+	/**
+	 * The deck is simply an array of integers with length 52. Integers are created from 4 bytes.
+	 * First two bytes are bit flags for card value. Second byte has 4 bits for suit, 4 bits
+	 * for numeric rank. Final byte stores associated prime.
+	 * 
+	 * xxxAKQJT | 98765432 | xSSSVVVV | xxPPPPPP
+	 * 
+	 * Using this format, cards can be quickly compared based on bitwise comparisons.
+	 */
+	public static int[] getDeck() {
+		int[] cards = new int[52];
+		int counter = 0;
 		
-		for(String suit : suits) {
-			for(String value : values) {
-				cards.put(value + suit, new Card(value, suit));
+		for (int i=0; i<4; i++) { // Enumerate through suits
+			for(int x=0; x < 13; x++, counter++) { // Enumerate through values
+				cards[counter] = (1 << (16 + x) | 1 << (12 + i) | (PRIMES[i] << 8) | PRIMES[x]); // Use bitwise OR to combine values
 			}
 		}
 		
-		shuffle();
+		return cards;
 	}
 	
-	public static Deck getTheDeck() {
-		if(the_deck == null) {
-			the_deck = new Deck();
-		}
-		return the_deck;
+	public static int get(int i, int cards[]) {
+		return cards[i];
 	}
 	
-	@SuppressWarnings("unchecked")
-	public void shuffle() {
-		unusedCards = (LinkedHashMap<String, Card>) cards.clone();
+	public static int findCard(int rank, int suit) {
+		return (1 << (16 + rank) | (0x8000 >> suit) | (rank << 8) | PRIMES[rank]);
 	}
 	
-	public Card drawCard() {
-		Object[] keys = unusedCards.keySet().toArray();
-		return drawCard(keys[random.nextInt(keys.length)].toString());
-	}
-	
-	public Card drawCard(String s) {
-		return unusedCards.remove(s);
-	}
-	
-	public Card reserveCard(String s) {
-		reservedCards.put(s, cards.remove(s));
-		return drawCard(s);
-	}
-	
-	public Card unreserveCard(String s) {
-		cards.put(s, reservedCards.remove(s));
-		return unusedCards.put(s, cards.get(s));
-	}
-	
-	public String[] listCards() {
-		String[] strings = new String[unusedCards.size()];
-		Card[] ca = new Card[unusedCards.size()];
-		unusedCards.values().toArray(ca);
-		int i=0;
-		
-		for(Card c : ca) {
-			strings[i] = c.toString();
-			i++;
-		}
-		
-		return strings;
+	public static int getRank(int card) {
+		return (card >> 8) & 0xF;
 	}
 }
