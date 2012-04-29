@@ -11,17 +11,17 @@ public class Deck {
 	 * First two bytes are bit flags for card value. Second byte has 4 bits for suit, 4 bits
 	 * for numeric rank. Final byte stores associated prime.
 	 * 
-	 * xxxAKQJT | 98765432 | xSSSVVVV | xxPPPPPP
+	 * xxxAKQJT | 98765432 | shcdVVVV | xxPPPPPP
 	 * 
 	 * Using this format, cards can be quickly compared based on bitwise comparisons.
 	 */
 	public static int[] getDeck() {
 		int[] cards = new int[52];
-		int counter = 0;
+		int counter = 0, suit = 0x1000;
 		
-		for (int i=0; i<4; i++) { // Enumerate through suits
+		for (int i=0; i<4; i++, suit<<=1) { // Enumerate through suits
 			for(int x=0; x < 13; x++, counter++) { // Enumerate through values
-				cards[counter] = (1 << (16 + x) | 1 << (12 + i) | (PRIMES[i] << 8) | PRIMES[x]); // Use bitwise OR to combine values
+				cards[counter] = (1 << (16 + x) | suit | (x << 8) | PRIMES[x]); // Use bitwise OR to combine values
 			}
 		}
 		
