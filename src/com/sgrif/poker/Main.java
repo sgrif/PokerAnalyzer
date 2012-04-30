@@ -8,16 +8,17 @@ public class Main {
 	private static int[] d = Deck.getDeck();
 
 	public static void main(String[] args) {
-		bench(false, 100);
+		for(int x=0; x<13; x++) {
+			System.out.println(x + (13*(x>>2)));
+		}
 	}
 	
 	private static void test1() {
-		g = new Game(5, 5, 0);
+		int i = 1024 / 8;
 	}
 	
 	private static void test2() {
-		int x = Arrays.binarySearch(g.products, 41*41*41*41*37);
-		int i = g.rankings[x];
+		int i = 1024 >> 3;
 	}
 	
 	private static void bench(boolean comp, int times) {
