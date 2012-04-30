@@ -1,23 +1,30 @@
 package com.sgrif.poker;
 
+import java.math.BigInteger;
 import java.util.Arrays;
+
+import static com.sgrif.poker.Factorial.*;
 
 public class Game {
 	private int hand_size;
 	private int hand_cards_playable;
 	private int board_size;
+	private int cards_playable;
 	private int deck[] = Deck.getDeck();
 	
 	private boolean royal_beats_5 = false;
+	private boolean five_of_a_kind_allowed = false;
 	
 	private int wins = 0;
 	private int played = 0;
 	
-	//private boolean[] board_flush_possible;
-	//private boolean[] board_straight_possble;
+	private static int[] nonUniqueCache = new int[26];
+	private static int[] uniqueCache = new int[26];
 	
-	private int[] rankings;
-	private int[] unique5;
+	public long[] products;
+	public int[] rankings;
+	public int[] unique5;
+	public int[] unique52;
 	private int[] flushes;
 	
 	public Game(int h, int cp, int b) {
@@ -25,33 +32,25 @@ public class Game {
 		hand_size = h;
 		hand_cards_playable = cp;
 		board_size = b;
-		//board_flush_possible = new boolean[(int)Math.pow(7, board_size) + 1];
+		cards_playable = cp + b;
 		
 		int n = ((1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8)+1);
 		unique5 = new int[n];
+		unique52 = new int[n];
 		flushes = new int[n];
-		rankings = new int[7475];
+		products = new long[possibleNonUnique5(cards_playable)];
+		rankings = new int[possibleNonUnique5(cards_playable)];
 		
 		generateRankings(0);
 	}
 	
 	private void generateRankings(int from) {
 		int i, j, k, l, m;
-		int n=0;
+		int n=1;
+		int o=0;
 		
 		//High card
-		for(i=5; i<13; i++) { // Can't have a non-straight hand lower than 75432
-			for(j=3; j<i; j++) {
-				for(k=2; k<j; k++) {
-					for(l=1; l<k; l++) {
-						for(m=0; m<l && !(i-m==4 || (i==12 && j==3 && k==2 && l==1 && m==0)); m++) { // No straights
-							unique5[((1 << i) | (1 << j) | (1 << k) | (1 << l) | (1 << m))] = n;
-							n++;
-						}
-					}
-				}
-			}
-		}
+		n = generateHighCards(n, 0, 13, 0);
 		
 		//Single pair
 		for(i=0; i<13; i++) { // The Pair
@@ -59,8 +58,9 @@ public class Game {
 				for(k=1; k<j; k++) { //Don't want to pair our kickers
 					for(l=0; l<k; l++) {
 						if(i!=j && i!=k && i!=l) { // No trips
-							rankings[n] = Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[j] * Deck.PRIMES[k] * Deck.PRIMES[l];
-							n++;
+							products[o] = Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[j] * Deck.PRIMES[k] * Deck.PRIMES[l];
+							rankings[o] = n;
+							n++; o++;
 						}
 					}
 				}
@@ -72,8 +72,9 @@ public class Game {
 			for(j=0; j<i; j++) { //Second pair can't be higher than first pair
 				for(k=0; k<13; k++) { //Kicker
 					if(k!=i && k!=j) { //No boats
-						rankings[n] = Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[j] * Deck.PRIMES[j] * Deck.PRIMES[k];
-						n++;
+						products[o] = Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[j] * Deck.PRIMES[j] * Deck.PRIMES[k];
+						rankings[o] = n;
+						n++; o++;
 					}
 				}
 			}
@@ -84,8 +85,9 @@ public class Game {
 			for(j=1; j<13; j++) { //Can't have kicker lower than 3
 				for(k=0; k<j; k++) {
 					if(i!=j && i!=k) { //No quads
-						rankings[n] = Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[j] * Deck.PRIMES[k];
-						n++;
+						products[o] = Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[j] * Deck.PRIMES[k];
+						rankings[o] = n;
+						n++; o++;
 					}
 				}
 			}
@@ -119,18 +121,20 @@ public class Game {
 		for(i=0; i<13; i++) { //Trips
 			for(j=0; j<13; j++) { //Pair
 				if(i!=j) { //No 5 of a kind
-					rankings[n] = Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[j] * Deck.PRIMES[j];
-					n++;
+					products[o] = Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[j] * Deck.PRIMES[j];
+					rankings[o] = n;
+					n++; o++;
 				}
 			}
 		}
 		
-		//Quads
-		for(i=0; i<13; i++) { //Quad
+		//Four of a kind
+		for(i=0; i<13; i++) { //Four
 			for(j=0; j<13; j++) { //Kicker
 				if(i!=j) { //No 5 of a kind
-					rankings[n] = Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[j];
-					n++;
+					products[o] = Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[j];
+					rankings[o] = n;
+					n++; o++;
 				}
 			}
 		}
@@ -150,65 +154,131 @@ public class Game {
 			n++;
 		}
 		
+		/*
 		//Five of a kind
 		for(i=0; i<13; i++) {
-			rankings[n] = Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[i];
-			n++;
+			products[o] = Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[i] * Deck.PRIMES[i];
+			rankings[o] = n;
+			n++; o++;
 		}
+		*/
 		
 		if(royal_beats_5) {
 			flushes[(0x1F<<8)] = n;
 			n++;
 		}
+		
+		associativeSort(products, rankings);
 	}
 	
-	public int getRanking(int c0, int c1, int c2, int c3, int c4) {
+	private int generateHighCards(int n, int from, int current, int bf) {
+		if(from == cards_playable) {
+			if((bf & 0x100F) != 0x100F && 
+					(bf & 0x1F00) != 0x1F00 && 
+					(bf & 0x0F80) != 0x0F80 && 
+					(bf & 0x07C0) != 0x07C0 && 
+					(bf & 0x03E0) != 0x03E0 && 
+					(bf & 0x01F0) != 0x01F0 && 
+					(bf & 0x00F8) != 0x00F8 && 
+					(bf & 0x007C) != 0x007C && 
+					(bf & 0x003E) != 0x003E && 
+					(bf & 0x001F) != 0x001F) {
+				unique5[bf] = n;
+				n++;
+			}
+		} else {
+			int next = 1 - ((from + 3)>>2);
+			for(int x=next; x<current; x++) {
+				bf |= (1<<x);
+				n = generateHighCards(n, from+1, x, bf);
+				bf ^= (1<<x);
+			}
+		}
+		return n;
+	}
+	
+	private int getRanking(int c0, int c1, int c2, int c3, int c4) {
 		int q = (c0 >> 16) | (c1 >> 16) | (c2 >> 16) | (c3 >> 16) | (c4 >> 16);
 		if((c0 & c1 & c2 & c3 & c4 & 0xF000) > 0) return flushes[q];
 		if(unique5[q] > 0) return unique5[q];
-		return Arrays.binarySearch(rankings, 0, 7475, ((c0 & 0xFF) * (c1 & 0xFF) * (c2 & 0xFF) * (c3 & 0xFF) * (c4 & 0xFF)));
+		int x = Arrays.binarySearch(products, ((c0 & 0xFF) * (c1 & 0xFF) * (c2 & 0xFF) * (c3 & 0xFF) * (c4 & 0xFF)));
+		return rankings[x];
 	}
 	
 	/*
-	private void generateBoardFlushChecks(int from, int[] board) {
-		if(from == board_size) {
-			int product = 1;
-			for(int c : board) {
-				product *= (c>>8 & 0xF);
-			}
-			if(!board_flush_possible[product]) {
-				board_flush_possible[product] = boardCheckFlushPossible(0, 0, board, new int[board_size-hand_cards_playable]);
-				String s = "";
-				for(int c : board) {
-					s += Integer.valueOf(c>>8 & 0xF).toString();
-				}
-				System.out.println(s + " flush possible: " + Boolean.valueOf(board_flush_possible[product]).toString());
-			}
-		} else {
-			for(int x=0;x<4;x++) {
-				board[from] = deck[13*x+1];
-				generateBoardFlushChecks(from+1, board);
-			}
-		}
+	 * Formula for all non-flush hands is calculated by determining all possible combinations with
+	 * repetition, subtracting all combinations without repetition, and subtracting combinations
+	 * more than 4 of a card.
+	 * All combinations with repetition:
+	 * (13+num_cards-1)!/(num_cards!*(13-1)!)
+	 * 
+	 * All combinations without repetition:
+	 * 13!/(num_cards!*(13-num_cards)!)
+	 * 
+	 * Combinations with more than 4 of a card:
+	 * ((13+num_cards-5-1)!/(num_cards-5)!*(13-1)!)*13
+	 */
+	private static int possibleNonUnique5(int i) {
+		if(nonUniqueCache[i] > 0) return nonUniqueCache[i];
+		BigInteger all, five_or_more;
+		
+		all = factorial(13+i-1).divide(factorial(i).multiply(factorial(12)));
+		five_or_more = factorial(13+i-6).divide(factorial(i-5).multiply(factorial(12))).multiply(BigInteger.valueOf(13));
+		int rv = all.subtract(five_or_more).intValue() - possibleUnique5(i);
+		
+		nonUniqueCache[i] = rv;
+		return rv;
 	}
 	
-	private boolean boardCheckFlushPossible(int from, int count, int[] board, int[] using) {
-		if(count == board_size - hand_cards_playable) {
-			int r = 0xF000;
-			for(int c : using) {
-				r &= c;
-			}
-			if(r > 0) return true;
-		} else {
-			for(int x=from;x<board_size;x++) {
-				using[count] = board[x];
-				boolean v = boardCheckFlushPossible(x+1, count+1, board, using);
-				if(v == true) return true;
+	private static int possibleUnique5(int i) {
+		if(uniqueCache[i] > 0) return uniqueCache[i];
+		BigInteger ret;
+		ret = factorial(13).divide(factorial(i).multiply(factorial(13-i)));
+		int reti = ret.intValue();
+		uniqueCache[i] = reti;
+		return reti;
+	}
+	
+	/**
+	 * Sorts arr0 using merge sort, and maintains the same order for arr1
+	 * @param arr0 The array to be sorted
+	 * @param arr1 The associated array
+	 * @param left Starting index
+	 * @param right Ending index
+	 */
+	private static void associativeSort(long[] arr0, int[] arr1, int left, int right) {
+		int index = partition(arr0, arr1, left, right);
+		if(left < index - 1)
+			associativeSort(arr0, arr1, left, index-1);
+		if(index < right)
+			associativeSort(arr0, arr1, index, right);
+	}
+	
+	private static int partition(long[] arr0, int[] arr1, int left, int right) {
+		int i=left,j=right;
+		long tmp;
+		int tmp1;
+		long pivot = arr0[(left+right)>>1];
+		
+		while(i <= j) {
+			while(arr0[i] < pivot) i++;
+			while(arr0[j] > pivot) j--;
+			if(i<=j) {
+				tmp = arr0[i]; tmp1 = arr1[i];
+				arr0[i] = arr0[j]; arr1[i] = arr1[j];
+				arr0[j] = tmp; arr1[j] = tmp1;
+				i++;
+				j--;
 			}
 		}
-		return false;
+		
+		return i;
 	}
-	*/
+	
+	private static void associativeSort(long[] arr0, int[] arr1) {
+		associativeSort(arr0, arr1, 0, arr0.length-1);
+	}
+	
 	public void enumerateAll(int rank1, int rank2, int suit1, int suit2) {
 		
 	}

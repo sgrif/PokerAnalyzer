@@ -6,6 +6,7 @@ public class Deck {
 	public static final int[] PRIMES	= {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41};
 										// 2, 3, 4, 5, 66, 77, 88, 99, TT, JJ, QQ, KK, AA
 										// d, h, c, s
+	private static final int[] deck		= getDeck(); 
 	/**
 	 * The deck is simply an array of integers with length 52. Integers are created from 4 bytes.
 	 * First two bytes are bit flags for card value. Second byte has 4 bits for suit, 4 bits
@@ -16,6 +17,7 @@ public class Deck {
 	 * Using this format, cards can be quickly compared based on bitwise comparisons.
 	 */
 	public static int[] getDeck() {
+		if(deck != null) return deck;
 		int[] cards = new int[52];
 		int counter = 0, suit = 0x1000;
 		
@@ -27,16 +29,5 @@ public class Deck {
 		
 		return cards;
 	}
-	
-	public static int get(int i, int cards[]) {
-		return cards[i];
-	}
-	
-	public static int findCard(int rank, int suit) {
-		return (1 << (16 + rank) | (0x8000 >> suit) | (rank << 8) | PRIMES[rank]);
-	}
-	
-	public static int getRank(int card) {
-		return (card >> 8) & 0xF;
-	}
+
 }

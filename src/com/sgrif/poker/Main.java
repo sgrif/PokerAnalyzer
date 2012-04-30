@@ -1,41 +1,28 @@
 package com.sgrif.poker;
 
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Locale;
 
 public class Main {
-	static int[] d = Deck.getDeck();
-	static Game g = new Game(2, 2, 5);
+	private static Game g = new Game(5, 5, 0);
+	private static int[] d = Deck.getDeck();
 
 	public static void main(String[] args) {
-		/*
-		for(int x=0;x<48;x++) {
-			for(int y=x+1; y<49; y++) {
-				for(int z=y+1; z<50; z++) {
-					for(int a=z+1; a<51; a++) {
-						for(int b=a+1; b<52; b++) {
-							System.out.println(g.getRanking(d[x], d[y], d[z], d[a], d[b]));
-						}
-					}
-				}
-			}
-		}*/
-		memBench();
+		bench(false, 100);
 	}
 	
 	private static void test1() {
-		int i = g.getRanking(d[0], d[1], d[2], d[3], d[12]);
+		g = new Game(5, 5, 0);
 	}
 	
 	private static void test2() {
-		int i = g.getRanking(d[12], d[24], d[36], d[48], d[8]);
+		int x = Arrays.binarySearch(g.products, 41*41*41*41*37);
+		int i = g.rankings[x];
 	}
 	
-	private static void bench() {
+	private static void bench(boolean comp, int times) {
 		long best1 = 0;
 		long best2 = 0;
-		int times = 1000000;
 		
 		for(int x=0;x<100;x++) {
 			long time_before = System.nanoTime();
@@ -48,29 +35,39 @@ public class Main {
 				best1 = t;
 			}
 		}
-		
-		for(int x=0;x<100;x++) {
-			long time_before = System.nanoTime();
-			for(int y=0;y<times;y++) {
-				test2();
-			}
-			long time_after = System.nanoTime();
-			long t = time_after - time_before;
-			if(t < best2 || best2 == 0) {
-				best2 = t;
-			}
-		}
 		best1 /= times;
-		best2 /= times;
-		String[] s = {"nanoseconds", "milliseconds", "seconds"};
 		int c1 = 0;
-		int c2 = 0;
+		String[] s = {"nanoseconds", "microseconds", "milliseconds", "seconds"};
+		while(best1 >= 1000) {
+			best1 /= 1000;
+			c1 += 1;
+		}
+		System.out.printf(Locale.US, "Case 1 took %1$,d %2$s %n", best1, s[c1]);
 		
-		System.out.printf(Locale.US, "Case 1 took %1$,d nano %n", best1);
-		System.out.printf(Locale.US, "Case 2 took %1$,d nano %n", best2);
+		if(comp) {
+			for(int x=0;x<100;x++) {
+				long time_before = System.nanoTime();
+				for(int y=0;y<times;y++) {
+					test2();
+				}
+				long time_after = System.nanoTime();
+				long t = time_after - time_before;
+				if(t < best2 || best2 == 0) {
+					best2 = t;
+				}
+			}
+			
+			best2 /= times;
+			int c2 = 0;
+			while(best2 >= 1000) {
+				best2 /= 1000;
+				c2 += 1;
+			}
+			System.out.printf(Locale.US, "Case 2 took %1$,d %2$s %n", best2, s[c2]);
+		}
 	}
 	private static void memBench() {
-		Object o = new Game(2, 2, 5);
+		Object o = new Game(5, 5, 0);
 		long mem_before = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 		long mem_after = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 		o = null;
@@ -81,7 +78,7 @@ public class Main {
 		System.gc(); System.gc(); System.gc(); System.gc(); 
 		
 		mem_before = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-		o = new Game(2, 2, 5);
+		o = new Game(5, 5, 0);
 
 		System.gc(); System.gc(); System.gc(); System.gc(); 
 		System.gc(); System.gc(); System.gc(); System.gc(); 
