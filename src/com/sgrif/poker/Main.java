@@ -1,24 +1,42 @@
 package com.sgrif.poker;
 
+import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Locale;
 
 public class Main {
-	private static Game g = new Game(5, 5, 0);
-	private static int[] d = Deck.getDeck();
+	private static Game g = new Game(2, 2, 5);
+	private static int[] deck = Deck.getDeck();
 
 	public static void main(String[] args) {
-		for(int x=0; x<13; x++) {
-			System.out.println(x + (13*(x>>2)));
+		bench(false, 10000000);
+		//System.out.println(g.getRanking5(deck[25], deck[11], deck[10], deck[9], deck[8]));
+	}
+	
+	private static void test2() {
+		int x, y, z, a, b, c, d, e;
+		for(x=0; x<13; x++) {
+			for(y=0; y<13; y++) {
+				for(z=0; z<13; z++) {
+					for(a=0; a<13; a++) {
+						for(b=1; b<13; b++) {
+							for(c=1; c<13; c++) {
+								for(d=1; d<13; d++) {
+									if(x!=b && y!=c && z!=d) {
+										e = g.getBestOf(deck[x], deck[y+13], deck[z+26], deck[a+39], deck[b], deck[c+13], deck[d+26]);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 	
 	private static void test1() {
-		int i = 1024 / 8;
-	}
-	
-	private static void test2() {
-		int i = 1024 >> 3;
+		g.getRanking5(deck[12], deck[11], deck[10], deck[9], deck[7]);
 	}
 	
 	private static void bench(boolean comp, int times) {
@@ -68,7 +86,7 @@ public class Main {
 		}
 	}
 	private static void memBench() {
-		Object o = new Game(5, 5, 0);
+		boolean[] o = new boolean[1000000];
 		long mem_before = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 		long mem_after = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 		o = null;
@@ -79,8 +97,7 @@ public class Main {
 		System.gc(); System.gc(); System.gc(); System.gc(); 
 		
 		mem_before = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-		o = new Game(5, 5, 0);
-
+		
 		System.gc(); System.gc(); System.gc(); System.gc(); 
 		System.gc(); System.gc(); System.gc(); System.gc(); 
 		System.gc(); System.gc(); System.gc(); System.gc(); 

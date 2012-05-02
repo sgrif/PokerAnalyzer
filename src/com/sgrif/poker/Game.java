@@ -17,6 +17,7 @@ public class Game {
 	
 	private int wins = 0;
 	private int played = 0;
+	private int test = 0;
 	
 	private static int[] nonUniqueCache = new int[26];
 	private static int[] uniqueCache = new int[26];
@@ -52,7 +53,7 @@ public class Game {
 		} else {
 			int perm_count = possiblePermutationsOfHandSize(cards_playable);
 			int max_unique_five_or_more = maxUniqueIndex(cards_playable);
-			int max_non_unique = possibleNonUnique(cards_playable);
+			int max_non_unique = possibleNonUnique(cards_playable) + 1;
 			
 			unique = new int[max_unique_five_or_more];
 			flushes = new int[max_unique_five_or_more];
@@ -203,7 +204,7 @@ public class Game {
 		associativeSort(products5, rankings5);
 	}
 	
-	private int getRanking5(int c0, int c1, int c2, int c3, int c4) {
+	public int getRanking5(int c0, int c1, int c2, int c3, int c4) {
 		int q = (c0 >> 16) | (c1 >> 16) | (c2 >> 16) | (c3 >> 16) | (c4 >> 16);
 		if((c0 & c1 & c2 & c3 & c4 & 0xF000) > 0) return flushes5[q];
 		if(unique5[q] > 0) return unique5[q];
@@ -211,7 +212,28 @@ public class Game {
 		return rankings5[x];
 	}
 	
-	private int getBestOf(int ... cards) {
+	public int getRanking7(int c0, int c1, int c2, int c3, int c4, int c5, int c6) {
+		int q = (c0 >> 16) | (c1 >> 16) | (c2 >> 16) | (c3 >> 16) | (c4 >> 16) | (c5 >> 16) | (c6 >> 16);
+		if((c0 & c1 & c2 & c3 & c4 & c5 & c6  & 0xF000) > 0) return flushes5[q];
+		if(unique5[q] > 0) return unique5[q];
+		int x = Arrays.binarySearch(products5, ((c0 & 0xFF) * (c1 & 0xFF) * (c2 & 0xFF) * (c3 & 0xFF) * (c4 & 0xFF) * (c5 & 0xFF) * (c6 & 0xFF)));
+		return rankings5[x];
+	}
+	
+	public int getRank(int ... cards) {
+		int q = 0;
+		long product = 1;
+		for(int x=0; x<cards.length; x++) {
+			q |= (cards[x] >> 16);
+			product *= (cards[x] & 0xFF);
+		}
+		if(flushes[q] > 0) return flushes[q];
+		if(unique[q] > 0) return unique[q];
+		int x = Arrays.binarySearch(products, product);
+		return rankings[x];
+	}
+	
+	public int getBestOf(int ... cards) {
 		int best = 0;
 		int current;
 		for(int[] p : permutations) {
@@ -227,9 +249,17 @@ public class Game {
 		}
 		
 		int n=0;
-		
-		
-		
+		generateHighCardRankings();
+		generateStraightRankings();
+		n = generateSinglePairRankings(n);
+		n = generateTwoPairRankings(n);
+		n = generateTripRankings(n);
+		n = generateFullHouseRankings(n);
+		n = generateQuadRankings(n);
+		associativeSort(products, rankings);
+		//System.out.println(Arrays.toString(products));
+		//System.out.println(Arrays.toString(rankings));
+		//System.out.println(n+test);
 	}
 	
 	public int generatePermutations(int from, int count, int[] cards, int index) {
@@ -249,20 +279,206 @@ public class Game {
 		generatePermutations(0, 0, new int[5], 0);
 	}
 	
-	private void generateNonFlushRankings(int from, int current, int[] cards) {
+	private int generateNonUniqueRankOf(int[] cards, int i) {
+		int bf = 0;
+		long product = 1;
+		for(int c : cards) {
+			bf |= c;
+			product *= (c & 0xFF);
+		}
+		bf >>= 16;
+		if((bf & 0x100F) == 0x100F
+				|| (bf & 0x001F) == 0x001F
+				|| (bf & 0x003E) == 0x003E
+				|| (bf & 0x007C) == 0x007C
+				|| (bf & 0x00F8) == 0x00F8
+				|| (bf & 0x01F0) == 0x01F0
+				|| (bf & 0x03E0) == 0x03E0
+				|| (bf & 0x07C0) == 0x07C0
+				|| (bf & 0x0F80) == 0x0F80
+				|| (bf & 0x1F00) == 0x1F00)
+			return 0;
+		products[i] = product;
+		rankings[i] = getBestOf(cards);
+		return 1;
+	}
+	
+	private void generateHighCardRankings() {
+		generateHighCardRankings(0, 13, new int[cards_playable]);
+	}
+	
+	private void generateHighCardRankings(int from, int current, int[] cards) {
 		if(from == cards_playable) {
 			int bf = 0;
 			for(int b : cards) {
 				bf |= b;
 			}
 			bf >>= 16;
+			if((bf & 0x100F) == 0x100F
+					|| (bf & 0x001F) == 0x001F
+					|| (bf & 0x003E) == 0x003E
+					|| (bf & 0x007C) == 0x007C
+					|| (bf & 0x00F8) == 0x00F8
+					|| (bf & 0x01F0) == 0x01F0
+					|| (bf & 0x03E0) == 0x03E0
+					|| (bf & 0x07C0) == 0x07C0
+					|| (bf & 0x0F80) == 0x0F80
+					|| (bf & 0x1F00) == 0x1F00)
+				return;
+			int rank = getBestOf(cards);
+			unique[bf] = rank;
+			test++;
 		} else {
-			int next = cards_playable - 1 - ((from + 3)>>2);
+			int next = cards_playable - ((from+(4-cards_playable%4))>>2) - from + ((cards_playable-4)>>2);
 			for(int x=next; x<current; x++) {
 				cards[from] = deck[x + (13*(from>>2))];
-				generateNonFlushRankings(from+1, x, cards);
+				generateHighCardRankings(from+1, x, cards);
 			}
 		}
+	}
+	
+	private void generateStraightRankings() {
+		int[] cards = new int[cards_playable];
+		for(int x=4; x<13; x++) { 
+			cards[0] = deck[x];
+			cards[1] = deck[x-1+13];
+			cards[2] = deck[x-2+26];
+			cards[3] = deck[x-3+39];
+			cards[4] = deck[x-4];
+			generateStraightKicker(5, cards);
+		}
+		cards[0] = deck[12];
+		cards[1] = deck[3+13];
+		cards[2] = deck[2+26];
+		cards[3] = deck[1+39];
+		cards[4] = deck[0];
+		generateStraightKicker(5, cards);
+	}
+	
+
+	private void generateStraightKicker(int from, int[] cards) {
+		if(from == cards_playable) {
+			int rank = getBestOf(cards);
+			if(rank < 5854 || rank > 5863) return;
+			int bf = 0;
+			for(int b : cards) {
+				bf |= b;
+			}
+			bf >>= 16;
+			unique[bf] = rank;
+			test++;
+		} else {
+			for(int x=0; x<13; x++) {
+				cards[from] = deck[x + (13*(from>>2))];
+				generateStraightKicker(from+1, cards);
+			}
+		}
+	}
+	
+	private int generateUniqueKicker(int from, int current, int[] cards, int counter, int test_to) {
+		if(from == cards_playable) {
+			counter += generateNonUniqueRankOf(cards, counter);
+		} else {
+			int next = cards_playable - ((from+(4-cards_playable%4))>>2)-from + ((cards_playable-4)>>2);
+			for(int x=next; x<current; x++) {
+				boolean matches = false;
+				for(int y=0; y<test_to; y++) {
+					if(deck[x] == cards[y]) matches = true;
+				}
+				if(!matches) {
+					cards[from] = deck[x + (13*(from>>2))];
+					counter = generateUniqueKicker(from+1, x, cards, counter, test_to);
+				}
+			}
+		}
+		return counter;
+	}
+	
+	private int generateNonUniqueKicker(int from, int current, int[] cards, int counter, int exclude) {
+		if(from == cards_playable) {
+			counter += generateNonUniqueRankOf(cards, counter);
+		} else {
+			for(int x=0; x<13; x++) {
+				if(x==exclude) return counter;
+				cards[from] = deck[x + (13*(from>>2))];
+				counter = generateNonUniqueKicker(from+1, x, cards, counter, exclude);
+			}
+		}
+		return counter;
+	}
+	
+	private int generateSinglePairRankings(int i) {
+		int[] cards = new int[cards_playable];
+		int x;
+		int counter = i;
+		
+		for(x=0; x<13; x++) {
+			cards[0] = deck[x]; cards[1] = deck[x+13];
+			counter = generateUniqueKicker(2, 13, cards, counter, 1);
+		}
+		return counter;
+	}
+	
+	private int generateTwoPairRankings(int i) {
+		int[] cards = new int[cards_playable];
+		int x, y;
+		int counter = i;
+		
+		for(x=1; x<13; x++) {
+			cards[0] = deck[x]; cards[2] = deck[x+13];
+			for(y=0; y<x; y++) {
+				cards[1] = deck[y]; cards[3] = deck[y+13];
+				counter = generateUniqueKicker(4, 13, cards, counter, 2);
+			}
+		}
+		return counter;
+	}
+	
+	private int generateTripRankings(int i) {
+		int[] cards = new int[cards_playable];
+		int x;
+		int counter = i;
+		
+		for(x=0; x<13; x++) {
+			cards[0] = deck[x];
+			cards[1] = deck[x+13];
+			cards[2] = deck[x+26];
+			counter = generateUniqueKicker(3, 13, cards, counter, 1);
+		}
+		
+		return counter;
+	}
+	
+	private int generateFullHouseRankings(int i) {
+		int[] cards = new int[cards_playable];
+		int x, y;
+		int counter = i;
+		
+		for(x=1; x<13; x++) {
+			cards[0] = deck[x]; cards[2] = deck[x+13]; cards[3] = deck[x+26];
+			for(y=0; y<x; y++) {
+				cards[1] = deck[y]; cards[4] = deck[y+13];
+				counter = generateUniqueKicker(5, 13, cards, counter, 2);
+			}
+		}
+		
+		return counter;
+	}
+	
+	private int generateQuadRankings(int i) {
+		int[] cards = new int[cards_playable];
+		int x;
+		int counter = i;
+		
+		for(x=0; x<13; x++) {
+			cards[0] = deck[x];
+			cards[1] = deck[x+13];
+			cards[2] = deck[x+26];
+			cards[3] = deck[x+39];
+			counter = generateNonUniqueKicker(4, 13, cards, counter, x);
+		}
+		
+		return counter;
 	}
 	
 	/*
@@ -313,7 +529,7 @@ public class Game {
 	}
 	
 	/**
-	 * Sorts arr0 using merge sort, and maintains the same order for arr1
+	 * Sorts arr0 using quick sort, and maintains the same order for arr1
 	 * @param arr0 The array to be sorted
 	 * @param arr1 The associated array
 	 * @param left Starting index
