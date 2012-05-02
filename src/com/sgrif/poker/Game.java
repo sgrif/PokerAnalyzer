@@ -213,29 +213,6 @@ public class Game {
 		return rankings5[x];
 	}
 	
-	public int testRank(int ... c) {
-		int q = 0, product = 1;
-		q |= c[0];
-		q |= c[1];
-		q |= c[2];
-		q |= c[3];
-		q |= c[4];
-		q |= c[5];
-		q |= c[6];
-		q >>= 16;
-		product *= (c[0] & 0xFF);
-		product *= (c[1] & 0xFF);
-		product *= (c[2] & 0xFF);
-		product *= (c[3] & 0xFF);
-		product *= (c[4] & 0xFF);
-		product *= (c[5] & 0xFF);
-		product *= (c[6] & 0xFF);
-		if(flushes[q] > 0) return flushes[q];
-		if(unique[q] > 0) return unique[q];
-		int x = Arrays.binarySearch(products, product);
-		return rankings[x];
-	}
-	
 	public int getRank(int c0, int c1, int c2, int c3, int c4, int c5, int ... cards) {
 		int q = (c0 >> 16) | (c1 >> 16) | (c2 >> 16) | (c3 >> 16) | (c4 >> 16) | (c5 >> 16);
 		long product = (c0 & 0xFF) * (c1 & 0xFF) * (c2 & 0xFF) * (c3 & 0xFF) * (c4 & 0xFF) * (c5 & 0xFF);
@@ -246,6 +223,15 @@ public class Game {
 		if(flushes[q] > 0) return flushes[q];
 		if(unique[q] > 0) return unique[q];
 		int x = Arrays.binarySearch(products, product);
+		try {
+			return rankings[x];
+		} catch (ArrayIndexOutOfBoundsException e) {
+			System.out.print(Integer.toHexString(c0) + " " + Integer.toHexString(c1) + " " + Integer.toHexString(c2) + " " + Integer.toHexString(c3) + " " + Integer.toHexString(c4) + " " + Integer.toHexString(c5) + " ");
+			for(int c : cards) {
+				System.out.print(Integer.toHexString(c));
+			}
+			System.exit(1);
+		}
 		return rankings[x];
 	}
 	
@@ -314,12 +300,7 @@ public class Game {
 				|| (bf & 0x0F80) == 0x0F80
 				|| (bf & 0x1F00) == 0x1F00)
 			return 0;
-		try {
-			products[i] = product;
-		} catch (ArrayIndexOutOfBoundsException e) {
-			associativeSort(products, rankings);
-			System.out.println(Arrays.toString(products));
-		}
+		products[i] = product;
 		rankings[i] = getBestOf(cards);
 		return 1;
 	}
@@ -425,7 +406,7 @@ public class Game {
 			}
 			counter += generateNonUniqueRankOf(cards, counter);
 		} else {
-			for(int x=0; x<13; x++) {
+			for(int x=current; x<13; x++) {
 				if(x!=exclude) {
 					cards[from] = deck[x + (13*(from%4))];
 					counter = generateNonUniqueKicker(from+1, x, cards, counter, exclude);
@@ -482,11 +463,22 @@ public class Game {
 		int x, y;
 		int counter = i;
 		
-		for(x=1; x<13; x++) {
+		for(x=0; x<13; x++) {
 			cards[0] = deck[x]; cards[2] = deck[x+13]; cards[3] = deck[x+26];
 			for(y=0; y<x; y++) {
-				cards[1] = deck[y]; cards[4] = deck[y+13];
-				counter = generateUniqueKicker(5, 13, cards, counter, 2);
+				if(y!=x) {
+					cards[1] = deck[y]; cards[4] = deck[y+13];
+					counter = generateUniqueKicker(5, 13, cards, counter, 2);
+					cards[5] = deck[y+26]; // with trips
+					counter = generateUniqueKicker(6, 13, cards, counter, 2);
+					for(int z=0; z<13; z++) {
+						if(z!=y && z!=x) {
+							cards[5] = deck[z+26];
+							cards[6] = deck[z+39];
+							counter = generateNonUniqueRankOf(cards, counter);
+						}
+					}
+				}
 			}
 		}
 		
@@ -503,7 +495,7 @@ public class Game {
 			cards[1] = deck[x+13];
 			cards[2] = deck[x+26];
 			cards[3] = deck[x+39];
-			counter = generateNonUniqueKicker(4, 13, cards, counter, x);
+			counter = generateNonUniqueKicker(4, 0, cards, counter, x);
 		}
 		
 		return counter;

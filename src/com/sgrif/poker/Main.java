@@ -10,7 +10,6 @@ public class Main {
 	private static int[] deck = Deck.getDeck();
 
 	public static void main(String[] args) {
-		/*
 		int x, y, z, a, b, c, d, e;
 		for(x=0; x<13; x++) {
 			for(y=0; y<13; y++) {
@@ -29,12 +28,9 @@ public class Main {
 				}
 			}
 		}
-		*/
-		bench(false, 1000000);
 	}
 	
 	private static void test1() {
-		g.testRank(deck[12], deck[11], deck[10], deck[9], deck[7], deck[6], deck[5]);
 	}
 	
 	private static void test2() {
