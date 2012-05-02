@@ -18,6 +18,7 @@ public class Game {
 	private int wins = 0;
 	private int played = 0;
 	private int test = 0;
+	private boolean debug = false;
 	
 	private static int[] nonUniqueCache = new int[26];
 	private static int[] uniqueCache = new int[26];
@@ -53,7 +54,7 @@ public class Game {
 		} else {
 			int perm_count = possiblePermutationsOfHandSize(cards_playable);
 			int max_unique_five_or_more = maxUniqueIndex(cards_playable);
-			int max_non_unique = possibleNonUnique(cards_playable) + 1;
+			int max_non_unique = possibleNonUnique(cards_playable) + 2;
 			
 			unique = new int[max_unique_five_or_more];
 			flushes = new int[max_unique_five_or_more];
@@ -212,20 +213,35 @@ public class Game {
 		return rankings5[x];
 	}
 	
-	public int getRanking7(int c0, int c1, int c2, int c3, int c4, int c5, int c6) {
-		int q = (c0 >> 16) | (c1 >> 16) | (c2 >> 16) | (c3 >> 16) | (c4 >> 16) | (c5 >> 16) | (c6 >> 16);
-		if((c0 & c1 & c2 & c3 & c4 & c5 & c6  & 0xF000) > 0) return flushes5[q];
-		if(unique5[q] > 0) return unique5[q];
-		int x = Arrays.binarySearch(products5, ((c0 & 0xFF) * (c1 & 0xFF) * (c2 & 0xFF) * (c3 & 0xFF) * (c4 & 0xFF) * (c5 & 0xFF) * (c6 & 0xFF)));
-		return rankings5[x];
+	public int testRank(int ... c) {
+		int q = 0, product = 1;
+		q |= c[0];
+		q |= c[1];
+		q |= c[2];
+		q |= c[3];
+		q |= c[4];
+		q |= c[5];
+		q |= c[6];
+		q >>= 16;
+		product *= (c[0] & 0xFF);
+		product *= (c[1] & 0xFF);
+		product *= (c[2] & 0xFF);
+		product *= (c[3] & 0xFF);
+		product *= (c[4] & 0xFF);
+		product *= (c[5] & 0xFF);
+		product *= (c[6] & 0xFF);
+		if(flushes[q] > 0) return flushes[q];
+		if(unique[q] > 0) return unique[q];
+		int x = Arrays.binarySearch(products, product);
+		return rankings[x];
 	}
 	
-	public int getRank(int ... cards) {
-		int q = 0;
-		long product = 1;
-		for(int x=0; x<cards.length; x++) {
-			q |= (cards[x] >> 16);
-			product *= (cards[x] & 0xFF);
+	public int getRank(int c0, int c1, int c2, int c3, int c4, int c5, int ... cards) {
+		int q = (c0 >> 16) | (c1 >> 16) | (c2 >> 16) | (c3 >> 16) | (c4 >> 16) | (c5 >> 16);
+		long product = (c0 & 0xFF) * (c1 & 0xFF) * (c2 & 0xFF) * (c3 & 0xFF) * (c4 & 0xFF) * (c5 & 0xFF);
+		for(int c : cards) {
+			q |= (c >> 16);
+			product *= (c & 0xFF);
 		}
 		if(flushes[q] > 0) return flushes[q];
 		if(unique[q] > 0) return unique[q];
@@ -298,7 +314,12 @@ public class Game {
 				|| (bf & 0x0F80) == 0x0F80
 				|| (bf & 0x1F00) == 0x1F00)
 			return 0;
-		products[i] = product;
+		try {
+			products[i] = product;
+		} catch (ArrayIndexOutOfBoundsException e) {
+			associativeSort(products, rankings);
+			System.out.println(Arrays.toString(products));
+		}
 		rankings[i] = getBestOf(cards);
 		return 1;
 	}
@@ -396,12 +417,19 @@ public class Game {
 	
 	private int generateNonUniqueKicker(int from, int current, int[] cards, int counter, int exclude) {
 		if(from == cards_playable) {
+			if(debug) {
+				for(int c : cards) {
+					System.out.print(Integer.toBinaryString(c) + " ");
+				}
+				System.exit(0);
+			}
 			counter += generateNonUniqueRankOf(cards, counter);
 		} else {
 			for(int x=0; x<13; x++) {
-				if(x==exclude) return counter;
-				cards[from] = deck[x + (13*(from>>2))];
-				counter = generateNonUniqueKicker(from+1, x, cards, counter, exclude);
+				if(x!=exclude) {
+					cards[from] = deck[x + (13*(from%4))];
+					counter = generateNonUniqueKicker(from+1, x, cards, counter, exclude);
+				}
 			}
 		}
 		return counter;

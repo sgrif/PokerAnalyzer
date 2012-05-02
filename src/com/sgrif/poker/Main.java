@@ -10,11 +10,7 @@ public class Main {
 	private static int[] deck = Deck.getDeck();
 
 	public static void main(String[] args) {
-		bench(false, 10000000);
-		//System.out.println(g.getRanking5(deck[25], deck[11], deck[10], deck[9], deck[8]));
-	}
-	
-	private static void test2() {
+		/*
 		int x, y, z, a, b, c, d, e;
 		for(x=0; x<13; x++) {
 			for(y=0; y<13; y++) {
@@ -24,7 +20,7 @@ public class Main {
 							for(c=1; c<13; c++) {
 								for(d=1; d<13; d++) {
 									if(x!=b && y!=c && z!=d) {
-										e = g.getBestOf(deck[x], deck[y+13], deck[z+26], deck[a+39], deck[b], deck[c+13], deck[d+26]);
+										e = g.getRank(deck[x], deck[y+13], deck[z+26], deck[a+39], deck[b], deck[c+13], deck[d+26]);
 									}
 								}
 							}
@@ -33,10 +29,16 @@ public class Main {
 				}
 			}
 		}
+		*/
+		bench(false, 1000000);
 	}
 	
 	private static void test1() {
-		g.getRanking5(deck[12], deck[11], deck[10], deck[9], deck[7]);
+		g.testRank(deck[12], deck[11], deck[10], deck[9], deck[7], deck[6], deck[5]);
+	}
+	
+	private static void test2() {
+		g.getRank(deck[12], deck[11], deck[10], deck[9], deck[7], deck[6]);
 	}
 	
 	private static void bench(boolean comp, int times) {
@@ -54,6 +56,7 @@ public class Main {
 				best1 = t;
 			}
 		}
+		
 		best1 /= times;
 		int c1 = 0;
 		String[] s = {"nanoseconds", "microseconds", "milliseconds", "seconds"};
@@ -86,7 +89,7 @@ public class Main {
 		}
 	}
 	private static void memBench() {
-		boolean[] o = new boolean[1000000];
+		Object o = new Game(2, 2, 5);
 		long mem_before = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 		long mem_after = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 		o = null;
@@ -97,6 +100,7 @@ public class Main {
 		System.gc(); System.gc(); System.gc(); System.gc(); 
 		
 		mem_before = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+		o = new Game(2, 2, 5);
 		
 		System.gc(); System.gc(); System.gc(); System.gc(); 
 		System.gc(); System.gc(); System.gc(); System.gc(); 
