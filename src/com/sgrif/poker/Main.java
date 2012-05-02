@@ -10,7 +10,7 @@ public class Main {
 	private static int[] deck = Deck.getDeck();
 
 	public static void main(String[] args) {
-		int x, y, z, a, b, c, d, e;
+		/*int x, y, z, a, b, c, d, e;
 		for(x=0; x<13; x++) {
 			for(y=0; y<13; y++) {
 				for(z=0; z<13; z++) {
@@ -27,7 +27,8 @@ public class Main {
 					}
 				}
 			}
-		}
+		}*/
+		memBench();
 	}
 	
 	private static void test1() {

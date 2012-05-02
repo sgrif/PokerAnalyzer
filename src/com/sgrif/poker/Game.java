@@ -465,7 +465,7 @@ public class Game {
 		
 		for(x=0; x<13; x++) {
 			cards[0] = deck[x]; cards[2] = deck[x+13]; cards[3] = deck[x+26];
-			for(y=0; y<x; y++) {
+			for(y=0; y<13; y++) {
 				if(y!=x) {
 					cards[1] = deck[y]; cards[4] = deck[y+13];
 					counter = generateUniqueKicker(5, 13, cards, counter, 2);
@@ -475,7 +475,7 @@ public class Game {
 						if(z!=y && z!=x) {
 							cards[5] = deck[z+26];
 							cards[6] = deck[z+39];
-							counter = generateNonUniqueRankOf(cards, counter);
+							counter += generateNonUniqueRankOf(cards, counter);
 						}
 					}
 				}
