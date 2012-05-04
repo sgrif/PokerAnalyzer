@@ -210,12 +210,7 @@ public class Game {
 		if((c0 & c1 & c2 & c3 & c4 & 0xF000) > 0) return flushes5[q];
 		if(unique5[q] > 0) return unique5[q];
 		int x = Arrays.binarySearch(products5, ((c0 & 0xFF) * (c1 & 0xFF) * (c2 & 0xFF) * (c3 & 0xFF) * (c4 & 0xFF)));
-		//try {
-			return rankings5[x];
-		//} catch(ArrayIndexOutOfBoundsException e) {
-		//	System.out.println(Integer.toHexString(c0) + " " + Integer.toHexString(c1) + " " + Integer.toHexString(c2) + " " + Integer.toHexString(c3) + " " + Integer.toHexString(c4));
-		//	System.exit(0);
-		//}
+		return rankings5[x];
 	}
 	
 	public int getRank(int c0, int c1, int c2, int c3, int c4, int c5, int ... cards) {
@@ -238,6 +233,12 @@ public class Game {
 			current = getRanking5(cards[p[0]], cards[p[1]], cards[p[2]], cards[p[3]], cards[p[4]]);
 			if(current > best) best=current;
 		}
+		int bf=0;
+		for(int c : cards) {
+			bf |= c;
+		}
+		bf>>=16;
+		if(best > 5853 && best < 5864 && Integer.bitCount(bf) < cards_playable) test++;
 		return best;
 	}
 	
@@ -247,6 +248,8 @@ public class Game {
 		}
 		generateNonFlushRankings();
 		associativeSort(products, rankings);
+		System.out.println(Arrays.binarySearch(products, 432));
+		System.out.println(test);
 	}
 	
 	public int generatePermutations(int from, int count, int[] cards, int index) {
@@ -264,102 +267,6 @@ public class Game {
 	
 	private void generatePermutations() {
 		generatePermutations(0, 0, new int[5], 0);
-	}
-	
-	private int generateNonUniqueRankOf(int[] cards, int i) {
-		int bf = 0;
-		long product = 1;
-		for(int c : cards) {
-			bf |= c;
-			product *= (c & 0xFF);
-		}
-		bf >>= 16;
-		if((bf & 0x100F) == 0x100F
-				|| (bf & 0x001F) == 0x001F
-				|| (bf & 0x003E) == 0x003E
-				|| (bf & 0x007C) == 0x007C
-				|| (bf & 0x00F8) == 0x00F8
-				|| (bf & 0x01F0) == 0x01F0
-				|| (bf & 0x03E0) == 0x03E0
-				|| (bf & 0x07C0) == 0x07C0
-				|| (bf & 0x0F80) == 0x0F80
-				|| (bf & 0x1F00) == 0x1F00)
-			return 0;
-		products[i] = product;
-		rankings[i] = getBestOf(cards);
-		return 1;
-	}
-	
-	private void generateHighCardRankings() {
-		generateHighCardRankings(0, 13, new int[cards_playable]);
-	}
-	
-	private void generateHighCardRankings(int from, int current, int[] cards) {
-		if(from == cards_playable) {
-			int bf = 0;
-			for(int b : cards) {
-				bf |= b;
-			}
-			bf >>= 16;
-			if((bf & 0x100F) == 0x100F
-					|| (bf & 0x001F) == 0x001F
-					|| (bf & 0x003E) == 0x003E
-					|| (bf & 0x007C) == 0x007C
-					|| (bf & 0x00F8) == 0x00F8
-					|| (bf & 0x01F0) == 0x01F0
-					|| (bf & 0x03E0) == 0x03E0
-					|| (bf & 0x07C0) == 0x07C0
-					|| (bf & 0x0F80) == 0x0F80
-					|| (bf & 0x1F00) == 0x1F00)
-				return;
-			int rank = getBestOf(cards);
-			unique[bf] = rank;
-			test++;
-		} else {
-			int next = cards_playable - ((from+(4-cards_playable%4))>>2) - from + ((cards_playable-4)>>2);
-			for(int x=next; x<current; x++) {
-				cards[from] = deck[x + (13*(from>>2))];
-				generateHighCardRankings(from+1, x, cards);
-			}
-		}
-	}
-	
-	private void generateStraightRankings() {
-		int[] cards = new int[cards_playable];
-		for(int x=4; x<13; x++) { 
-			cards[0] = deck[x];
-			cards[1] = deck[x-1+13];
-			cards[2] = deck[x-2+26];
-			cards[3] = deck[x-3+39];
-			cards[4] = deck[x-4];
-			generateStraightKicker(5, cards);
-		}
-		cards[0] = deck[12];
-		cards[1] = deck[3+13];
-		cards[2] = deck[2+26];
-		cards[3] = deck[1+39];
-		cards[4] = deck[0];
-		generateStraightKicker(5, cards);
-	}
-	
-
-	private void generateStraightKicker(int from, int[] cards) {
-		if(from == cards_playable) {
-			int rank = getBestOf(cards);
-			if(rank < 5854 || rank > 5863) return;
-			int bf = 0;
-			for(int b : cards) {
-				bf |= b;
-			}
-			bf >>= 16;
-			unique[bf] = rank;
-			test++;
-		} else {
-			for(int x=0; x<13; x++) {
-				cards[from] = deck[x + (13*(from>>2))];
-				generateStraightKicker(from+1, cards);
-			}
-		}
 	}
 	
 	private int generateNonFlushRankings(int from, int current, int[] cards, int counter, int match) {
@@ -385,10 +292,6 @@ public class Game {
 				unique[bf] = getBestOf(cards);
 				return counter;
 			}
-			if((cards[0] >> 16) == 0x2
-					&& (cards[1] >> 16) == 0x100
-					&& (cards[2] >> 16) == 0x800)
-				System.out.println("break");
 			products[counter] = product;
 			rankings[counter] = getBestOf(cards);
 			counter++;
@@ -412,124 +315,6 @@ public class Game {
 	
 	private void generateNonFlushRankings() {
 		generateNonFlushRankings(0, 0, new int[cards_playable], 0, 4);
-	}
-	
-	private int generateUniqueKicker(int from, int current, int[] cards, int counter, int test_to) {
-		if(from == cards_playable) {
-			counter += generateNonUniqueRankOf(cards, counter);
-		} else {
-			int next = cards_playable - ((from+(4-cards_playable%4))>>2)-from + ((cards_playable-4)>>2);
-			for(int x=next; x<current; x++) {
-				boolean matches = false;
-				for(int y=0; y<test_to; y++) {
-					if(deck[x] == cards[y]) matches = true;
-				}
-				if(!matches) {
-					cards[from] = deck[x + (13*(from>>2))];
-					counter = generateUniqueKicker(from+1, x, cards, counter, test_to);
-				}
-			}
-		}
-		return counter;
-	}
-	
-	private int generateNonUniqueKicker(int from, int current, int[] cards, int counter, int exclude) {
-		if(from == cards_playable) {
-			counter += generateNonUniqueRankOf(cards, counter);
-		} else {
-			for(int x=current; x<13; x++) {
-				if(x!=exclude) {
-					cards[from] = deck[x + (13*(from%4))];
-					counter = generateNonUniqueKicker(from+1, x, cards, counter, exclude);
-				}
-			}
-		}
-		return counter;
-	}
-	
-	private int generateSinglePairRankings(int i) {
-		int[] cards = new int[cards_playable];
-		int x;
-		int counter = i;
-		
-		for(x=0; x<13; x++) {
-			cards[0] = deck[x]; cards[1] = deck[x+13];
-			counter = generateUniqueKicker(2, 13, cards, counter, 1);
-		}
-		return counter;
-	}
-	
-	private int generateTwoPairRankings(int i) {
-		int[] cards = new int[cards_playable];
-		int x, y;
-		int counter = i;
-		
-		for(x=1; x<13; x++) {
-			cards[0] = deck[x]; cards[2] = deck[x+13];
-			for(y=0; y<x; y++) {
-				cards[1] = deck[y]; cards[3] = deck[y+13];
-				counter = generateUniqueKicker(4, 13, cards, counter, 2);
-			}
-		}
-		return counter;
-	}
-	
-	private int generateTripRankings(int i) {
-		int[] cards = new int[cards_playable];
-		int x;
-		int counter = i;
-		
-		for(x=0; x<13; x++) {
-			cards[0] = deck[x];
-			cards[1] = deck[x+13];
-			cards[2] = deck[x+26];
-			counter = generateUniqueKicker(3, 13, cards, counter, 1);
-		}
-		
-		return counter;
-	}
-	
-	private int generateFullHouseRankings(int i) {
-		int[] cards = new int[cards_playable];
-		int x, y;
-		int counter = i;
-		
-		for(x=0; x<13; x++) {
-			cards[0] = deck[x]; cards[2] = deck[x+13]; cards[3] = deck[x+26];
-			for(y=0; y<13; y++) {
-				if(y!=x) {
-					cards[1] = deck[y]; cards[4] = deck[y+13];
-					counter = generateUniqueKicker(5, 13, cards, counter, 2);
-					cards[5] = deck[y+26]; // with trips
-					counter = generateUniqueKicker(6, 13, cards, counter, 2);
-					for(int z=0; z<13; z++) {
-						if(z!=y && z!=x) {
-							cards[5] = deck[z+26];
-							cards[6] = deck[z+39];
-							counter += generateNonUniqueRankOf(cards, counter);
-						}
-					}
-				}
-			}
-		}
-		
-		return counter;
-	}
-	
-	private int generateQuadRankings(int i) {
-		int[] cards = new int[cards_playable];
-		int x;
-		int counter = i;
-		
-		for(x=0; x<13; x++) {
-			cards[0] = deck[x];
-			cards[1] = deck[x+13];
-			cards[2] = deck[x+26];
-			cards[3] = deck[x+39];
-			counter = generateNonUniqueKicker(4, 0, cards, counter, x);
-		}
-		
-		return counter;
 	}
 	
 	/*
