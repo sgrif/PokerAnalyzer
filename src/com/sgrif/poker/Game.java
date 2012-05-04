@@ -210,12 +210,17 @@ public class Game {
 		if((c0 & c1 & c2 & c3 & c4 & 0xF000) > 0) return flushes5[q];
 		if(unique5[q] > 0) return unique5[q];
 		int x = Arrays.binarySearch(products5, ((c0 & 0xFF) * (c1 & 0xFF) * (c2 & 0xFF) * (c3 & 0xFF) * (c4 & 0xFF)));
-		return rankings5[x];
+		//try {
+			return rankings5[x];
+		//} catch(ArrayIndexOutOfBoundsException e) {
+		//	System.out.println(Integer.toHexString(c0) + " " + Integer.toHexString(c1) + " " + Integer.toHexString(c2) + " " + Integer.toHexString(c3) + " " + Integer.toHexString(c4));
+		//	System.exit(0);
+		//}
 	}
 	
 	public int getRank(int c0, int c1, int c2, int c3, int c4, int c5, int ... cards) {
 		int q = (c0 >> 16) | (c1 >> 16) | (c2 >> 16) | (c3 >> 16) | (c4 >> 16) | (c5 >> 16);
-		long product = (c0 & 0xFF) * (c1 & 0xFF) * (c2 & 0xFF) * (c3 & 0xFF) * (c4 & 0xFF) * (c5 & 0xFF);
+		long product = (c0 & 0xFF) * (c1 & 0xFF) * (c2 & 0xFF) * (c3 & 0xFF) * (c4 & 0xFF) * (long)(c5 & 0xFF);
 		for(int c : cards) {
 			q |= (c >> 16);
 			product *= (c & 0xFF);
@@ -223,15 +228,6 @@ public class Game {
 		if(flushes[q] > 0) return flushes[q];
 		if(unique[q] > 0) return unique[q];
 		int x = Arrays.binarySearch(products, product);
-		try {
-			return rankings[x];
-		} catch (ArrayIndexOutOfBoundsException e) {
-			System.out.print(Integer.toHexString(c0) + " " + Integer.toHexString(c1) + " " + Integer.toHexString(c2) + " " + Integer.toHexString(c3) + " " + Integer.toHexString(c4) + " " + Integer.toHexString(c5) + " ");
-			for(int c : cards) {
-				System.out.print(Integer.toHexString(c));
-			}
-			System.exit(1);
-		}
 		return rankings[x];
 	}
 	
@@ -249,19 +245,8 @@ public class Game {
 		if(cards_playable == 5) {
 			return;
 		}
-		
-		int n=0;
-		generateHighCardRankings();
-		generateStraightRankings();
-		n = generateSinglePairRankings(n);
-		n = generateTwoPairRankings(n);
-		n = generateTripRankings(n);
-		n = generateFullHouseRankings(n);
-		n = generateQuadRankings(n);
+		generateNonFlushRankings();
 		associativeSort(products, rankings);
-		//System.out.println(Arrays.toString(products));
-		//System.out.println(Arrays.toString(rankings));
-		//System.out.println(n+test);
 	}
 	
 	public int generatePermutations(int from, int count, int[] cards, int index) {
@@ -377,6 +362,58 @@ public class Game {
 		}
 	}
 	
+	private int generateNonFlushRankings(int from, int current, int[] cards, int counter, int match) {
+		if(from == cards_playable) {
+			int bf = 0;
+			long product = 1;
+			for(int c : cards) {
+				bf |= c;
+				product *= (c & 0xFF);
+			}
+			bf >>= 16;
+			if(Integer.bitCount(bf) == cards_playable
+					||(bf & 0x100F) == 0x100F
+					|| (bf & 0x001F) == 0x001F
+					|| (bf & 0x003E) == 0x003E
+					|| (bf & 0x007C) == 0x007C
+					|| (bf & 0x00F8) == 0x00F8
+					|| (bf & 0x01F0) == 0x01F0
+					|| (bf & 0x03E0) == 0x03E0
+					|| (bf & 0x07C0) == 0x07C0
+					|| (bf & 0x0F80) == 0x0F80
+					|| (bf & 0x1F00) == 0x1F00) {
+				unique[bf] = getBestOf(cards);
+				return counter;
+			}
+			if((cards[0] >> 16) == 0x2
+					&& (cards[1] >> 16) == 0x100
+					&& (cards[2] >> 16) == 0x800)
+				System.out.println("break");
+			products[counter] = product;
+			rankings[counter] = getBestOf(cards);
+			counter++;
+		} else {
+			int next, next_match;
+			if(match > 0) {
+				next = current;
+				next_match = match-1;
+			} else {
+				next = current+1;
+				next_match = 3;
+			}
+			
+			for(int x=next; x<13; x++, next_match=3) {
+				cards[from] = deck[x + (13*(from%4))];
+				counter = generateNonFlushRankings(from+1, x, cards, counter, next_match);
+			}
+		}
+		return counter;
+	}
+	
+	private void generateNonFlushRankings() {
+		generateNonFlushRankings(0, 0, new int[cards_playable], 0, 4);
+	}
+	
 	private int generateUniqueKicker(int from, int current, int[] cards, int counter, int test_to) {
 		if(from == cards_playable) {
 			counter += generateNonUniqueRankOf(cards, counter);
@@ -398,12 +435,6 @@ public class Game {
 	
 	private int generateNonUniqueKicker(int from, int current, int[] cards, int counter, int exclude) {
 		if(from == cards_playable) {
-			if(debug) {
-				for(int c : cards) {
-					System.out.print(Integer.toBinaryString(c) + " ");
-				}
-				System.exit(0);
-			}
 			counter += generateNonUniqueRankOf(cards, counter);
 		} else {
 			for(int x=current; x<13; x++) {

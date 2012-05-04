@@ -10,7 +10,35 @@ public class Main {
 	private static int[] deck = Deck.getDeck();
 
 	public static void main(String[] args) {
-		/*int x, y, z, a, b, c, d, e;
+		/*
+		int x, y, z, a, b, c, d, e;
+		int[] products = new int[10000];
+		x=0;
+		for(y=x; y<13; y++) {
+			for(z=y; z<13; z++) {
+				for(a=z; a<13; a++) {
+					for(b=a+1; b<13; b++) {
+						for(c=b; c<13; c++) {
+							for(d=c; d<13; d++) {
+								e = Deck.PRIMES[x] * Deck.PRIMES[y] * Deck.PRIMES[z] * Deck.PRIMES[a] * Deck.PRIMES[b] * Deck.PRIMES[c] * Deck.PRIMES[d];
+								if(Arrays.binarySearch(products, e) > 0)
+									System.out.println(x + " "  + y + " "  + z + " "  + a + " "  + b + " "  + c + " "  + d);
+								else 
+									products[0] = e;
+									Arrays.sort(products);
+							}
+						}
+					}
+				}
+			}
+		}*/
+		testAllHands();
+		//bench(false, 1000000);
+		
+	}
+	
+	private static void testAllHands() {
+		int x, y, z, a, b, c, d, e;
 		for(x=0; x<13; x++) {
 			for(y=0; y<13; y++) {
 				for(z=0; z<13; z++) {
@@ -27,11 +55,11 @@ public class Main {
 					}
 				}
 			}
-		}*/
-		memBench();
+		}
 	}
 	
 	private static void test1() {
+		g.getRank(deck[12], deck[11], deck[10], deck[9], deck[7], deck[6]);
 	}
 	
 	private static void test2() {
