@@ -4,37 +4,36 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Locale;
+import static com.sgrif.poker.Deck.PRIMES;
 
 public class Main {
-	private static Game g = new Game(2, 2, 5);
+	private static Game g = new Game(3, 3, 5);
 	private static int[] deck = Deck.getDeck();
 
 	public static void main(String[] args) {
-		/*
-		int x, y, z, a, b, c, d, e;
-		int[] products = new int[10000];
-		x=0;
-		for(y=x; y<13; y++) {
-			for(z=y; z<13; z++) {
-				for(a=z; a<13; a++) {
-					for(b=a+1; b<13; b++) {
-						for(c=b; c<13; c++) {
-							for(d=c; d<13; d++) {
-								e = Deck.PRIMES[x] * Deck.PRIMES[y] * Deck.PRIMES[z] * Deck.PRIMES[a] * Deck.PRIMES[b] * Deck.PRIMES[c] * Deck.PRIMES[d];
-								if(Arrays.binarySearch(products, e) > 0)
-									System.out.println(x + " "  + y + " "  + z + " "  + a + " "  + b + " "  + c + " "  + d);
-								else 
-									products[0] = e;
-									Arrays.sort(products);
-							}
-						}
+		int counter=0;
+		for(int x=0; x<5; x++) {
+			for(int y=x; y<13; y++) {
+				for(int z=y; z<13; z++) {
+					for(int a=z; a<13; a++) {
+						counter++;
 					}
 				}
 			}
-		}*/
-		testAllHands();
-		//bench(false, 1000000);
-		
+		}
+
+		for(int x=5; x<13; x++) {
+			counter++;
+			for(int y=5; y<13; y++) {
+				if(y != x) {
+					counter++;
+					for(int z=5; z<13; z++) {
+						counter++;
+					}
+				}
+			}
+		}
+		System.out.println(counter);
 	}
 	
 	private static void testAllHands() {

@@ -46,15 +46,18 @@ public class Game {
 		products5 = new long[possibleNonUnique(5)];
 		rankings5 = new int[possibleNonUnique(5)];
 		
+		generateRankings5();
+		
 		if(cards_playable == 5) {
 			unique = unique5;
 			flushes = flushes5;
 			products = products5;
 			rankings = rankings5;
+			
 		} else {
 			int perm_count = possiblePermutationsOfHandSize(cards_playable);
 			int max_unique_five_or_more = maxUniqueIndex(cards_playable);
-			int max_non_unique = possibleNonUnique(cards_playable) + 2;
+			int max_non_unique = possibleNonUnique(cards_playable);
 			
 			unique = new int[max_unique_five_or_more];
 			flushes = new int[max_unique_five_or_more];
@@ -64,7 +67,6 @@ public class Game {
 			generatePermutations();
 		}
 		
-		generateRankings5();
 		generateRankings();
 	}
 	
@@ -86,7 +88,8 @@ public class Game {
 				}
 			}
 		}
-				//Single pair
+		
+		//Single pair
 		for(i=0; i<13; i++) { // The Pair
 			for(j=2; j<13; j++) { //Impossible to have any kicker lower than 4
 				for(k=1; k<j; k++) { //Don't want to pair our kickers
@@ -248,8 +251,24 @@ public class Game {
 		}
 		generateNonFlushRankings();
 		associativeSort(products, rankings);
-		System.out.println(Arrays.binarySearch(products, 432));
-		System.out.println(test);
+		int counter = 0;
+		for(int x=0; x<5; x++) {
+			counter = test(1, x, counter);
+		}
+		System.out.println("Number of excess indexes: " + (-1 - Arrays.binarySearch(products, 1)));
+		System.out.println("Number of straights with pairs: " + test);
+		System.out.println("Number of combinations for one straight: " + counter);
+	}
+	
+	private int test(int from, int current, int counter) {
+		if(from == cards_playable-5) {
+			counter++;
+		} else {
+			for(int x=current; x<13; x++) {
+				counter = test(from+1, x, counter);
+			}
+		}
+		return counter;
 	}
 	
 	public int generatePermutations(int from, int count, int[] cards, int index) {
@@ -278,7 +297,8 @@ public class Game {
 				product *= (c & 0xFF);
 			}
 			bf >>= 16;
-			if(Integer.bitCount(bf) == cards_playable
+			int rank = getBestOf(cards);
+			if((Integer.bitCount(bf) == cards_playable
 					||(bf & 0x100F) == 0x100F
 					|| (bf & 0x001F) == 0x001F
 					|| (bf & 0x003E) == 0x003E
@@ -288,12 +308,13 @@ public class Game {
 					|| (bf & 0x03E0) == 0x03E0
 					|| (bf & 0x07C0) == 0x07C0
 					|| (bf & 0x0F80) == 0x0F80
-					|| (bf & 0x1F00) == 0x1F00) {
-				unique[bf] = getBestOf(cards);
+					|| (bf & 0x1F00) == 0x1F00)
+					&& rank < 5864) {
+				unique[bf] = rank;
 				return counter;
 			}
 			products[counter] = product;
-			rankings[counter] = getBestOf(cards);
+			rankings[counter] = rank;
 			counter++;
 		} else {
 			int next, next_match;

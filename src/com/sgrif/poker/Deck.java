@@ -12,7 +12,7 @@ public class Deck {
 	 * First two bytes are bit flags for card value. Second byte has 4 bits for suit, 4 bits
 	 * for numeric rank. Final byte stores associated prime.
 	 * 
-	 * xxxAKQJT | 98765432 | shcdSSSS | xxPPPPPP
+	 * xxxAKQJT | 98765432 | shcdxSSS | xxPPPPPP
 	 * 
 	 * Using this format, cards can be quickly compared based on bitwise comparisons.
 	 */
