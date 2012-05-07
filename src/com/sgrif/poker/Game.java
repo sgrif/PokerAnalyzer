@@ -20,8 +20,10 @@ public class Game {
 	private int test = 0;
 	private boolean debug = false;
 	
-	private static int[] nonUniqueCache = new int[26];
-	private static int[] uniqueCache = new int[26];
+	private static int[] nonUniqueCache = new int[27];
+	private static int[][] comRepetitionCache = new int[14][27];
+	private static int[][] comUniqueCache = new int[14][27];
+	private static int[] pairedStraightCache = new int[27];
 	
 	private long[] products5;
 	private int[] rankings5;
@@ -34,6 +36,9 @@ public class Game {
 	private int[] flushes;
 	private int[][] permutations = {{0, 1, 2, 3, 4}};
 	
+	public static final int MAX_UNIQUE_INDEX = 0x1FFF + 1;
+	public static final int MAX_UNIQUE_INDEX5 = 0x1F00 + 1;
+	
 	public Game(int h, int cp, int b) {
 		
 		hand_size = h;
@@ -41,8 +46,8 @@ public class Game {
 		board_size = b;
 		cards_playable = cp + b;
 		
-		unique5 = new int[maxUniqueIndex(5)];
-		flushes5 = new int[maxUniqueIndex(5)];
+		unique5 = new int[MAX_UNIQUE_INDEX5];
+		flushes5 = new int[MAX_UNIQUE_INDEX5];
 		products5 = new long[possibleNonUnique(5)];
 		rankings5 = new int[possibleNonUnique(5)];
 		
@@ -53,21 +58,18 @@ public class Game {
 			flushes = flushes5;
 			products = products5;
 			rankings = rankings5;
-			
 		} else {
 			int perm_count = possiblePermutationsOfHandSize(cards_playable);
-			int max_unique_five_or_more = maxUniqueIndex(cards_playable);
 			int max_non_unique = possibleNonUnique(cards_playable);
 			
-			unique = new int[max_unique_five_or_more];
-			flushes = new int[max_unique_five_or_more];
+			unique = new int[MAX_UNIQUE_INDEX];
+			flushes = new int[MAX_UNIQUE_INDEX];
 			products = new long[max_non_unique];
 			rankings = new int[max_non_unique];
 			permutations = new int[perm_count][5];
 			generatePermutations();
+			generateRankings();
 		}
-		
-		generateRankings();
 	}
 	
 	private void generateRankings5() {
@@ -251,13 +253,12 @@ public class Game {
 		}
 		generateNonFlushRankings();
 		associativeSort(products, rankings);
-		int counter = 0;
-		for(int x=0; x<5; x++) {
-			counter = test(1, x, counter);
-		}
+		//testAll(0, new int[cards_playable]);
 		System.out.println("Number of excess indexes: " + (-1 - Arrays.binarySearch(products, 1)));
 		System.out.println("Number of straights with pairs: " + test);
-		System.out.println("Number of combinations for one straight: " + counter);
+		System.out.println("Number of combinations for straights: " + possiblePairedStraights(cards_playable));
+		System.out.println("I WILL MURDER YOUR FAMILY: " + ((-1 - Arrays.binarySearch(products, 1) - possiblePairedStraights(cards_playable))));
+		test(cards_playable);
 	}
 	
 	private int test(int from, int current, int counter) {
@@ -269,6 +270,28 @@ public class Game {
 			}
 		}
 		return counter;
+	}
+	
+	private void testAll(int from, int[] cards) {
+		if(from == cards_playable) {
+			int[] other_cards = new int[cards.length-6];
+			for(int x=6; x<other_cards.length+6; x++) {
+				other_cards[x-6] = deck[cards[x]];
+			}
+			int i = getRank(deck[cards[0]], deck[cards[1]], deck[cards[2]], deck[cards[3]], deck[cards[4]], deck[cards[5]], other_cards);
+		} else {
+			for(int x=0; x<13; x++) {
+				if(from >= 4) {
+					if(x != cards[from-4]) {
+						cards[from] = x;
+						testAll(from+1, cards);
+					}
+				} else {
+					cards[from] = x;
+					testAll(from+1, cards);
+				}
+			}
+		}
 	}
 	
 	public int generatePermutations(int from, int count, int[] cards, int index) {
@@ -309,7 +332,7 @@ public class Game {
 					|| (bf & 0x07C0) == 0x07C0
 					|| (bf & 0x0F80) == 0x0F80
 					|| (bf & 0x1F00) == 0x1F00)
-					&& rank < 5864) {
+					/*&& rank < 5864*/) {
 				unique[bf] = rank;
 				return counter;
 			}
@@ -352,35 +375,116 @@ public class Game {
 	 * ((13+num_cards-5-1)!/(num_cards-5)!*(13-1)!)*13
 	 */
 	private static int possibleNonUnique(int i) {
-		if(nonUniqueCache[i] > 0) return nonUniqueCache[i];
-		BigInteger all, five_or_more;
-		
-		all = factorial(13+i-1).divide(factorial(i).multiply(factorial(12)));
-		five_or_more = factorial(13+i-6).divide(factorial(i-5).multiply(factorial(12))).multiply(BigInteger.valueOf(13));
-		int rv = all.subtract(five_or_more).intValue() - possibleUnique(i);
-		
+		if(nonUniqueCache[i] > 0) return nonUniqueCache[i];		
+		int rv = comRepetition(13, i) - comRepetition(13, i-5)*13 - comUnique(13, i);
 		nonUniqueCache[i] = rv;
 		return rv;
 	}
 	
-	private static int possibleUnique(int i) {
-		if(uniqueCache[i] > 0) return uniqueCache[i];
-		BigInteger ret;
-		ret = factorial(13).divide(factorial(i).multiply(factorial(13-i)));
-		int reti = ret.intValue();
-		uniqueCache[i] = reti;
-		return reti;
+	/**
+	 * Calculates the number of unique combinations with repetition of count cards within max values
+	 * Formula:
+	 * (max+count-1)!/(count!*(max-1)!)
+	 * 
+	 * @param max Number of possible values for the card between 1 and 13
+	 * @param count Number of cards to calculate for
+	 * @return Result of formula
+	 */
+	private static int comRepetition(int max, int count) {
+		if(comRepetitionCache[max][count] > 0) return comRepetitionCache[max][count];
+		int ret = factorial(max+count-1).divide(factorial(count).multiply(factorial(max-1))).intValue();
+		comRepetitionCache[max][count] = ret;
+		return ret;
 	}
 	
-	public static int maxUniqueIndex(int i) {
-		int r = 0;
-		for(int x=12; x>12-i; x--) {
-			r |= (1<<x);
+	/**
+	 * Calculates the number of unique combinations without repetition of count cards within max
+	 * values. 
+	 * Formula:
+	 * max!/(count!*(max-count)!)
+	 * 
+	 * @param max Number of possible values for the card between 1 and 13
+	 * @param count Number of cards to calculate for
+	 * @return Result of formula
+	 */
+	private static int comUnique(int max, int count) {
+		if(comUniqueCache[max][count] > 0) return comUniqueCache[max][count];
+		int ret = factorial(max).divide(factorial(count).multiply(factorial(max - count))).intValue();
+		comUniqueCache[max][count] = ret;
+		return ret;
+	}
+	
+	/**
+	 * Returns the number of ways to have a straight and also a pair, two pair, or 
+	 * a set. Formula takes all combinations with repetition that wouldn't give a higher
+	 * straight, and removes all combinations without repetition that wouldn't give a higher
+	 * straight, and wouldn't be paired with a card in the straight. 
+	 * 
+	 * Still need to exclude full houses, four of a kind, and illegal hands
+	 * 
+	 * @param i The number of playable cards
+	 * @return The number of ways to make a straight with a pair, two pair, or set
+	 */
+	private static int possiblePairedStraights(int i) {
+		if(pairedStraightCache[i] > 0) return pairedStraightCache[i];
+		int ret = (comRepetition(12, i-5) - comUnique(7, i-5)) * 9; //All non ace straights
+		ret += comRepetition(13, i-5) - comUnique(8, i-5); //Ace high straight
+		pairedStraightCache[i] = ret;
+		return ret;
+	}
+	
+	private static void test(int i) {
+		/*
+		int x = comRepetition(5, 1);
+		System.out.println(x);
+		x *= 5;
+		System.out.println(x);
+		int y = comRepetition(7, 0);
+		y *= 7;
+		x += y;
+		System.out.println(x);
+		*/
+		int counter = 0;
+		for(int x=0; x<13; x++) {
+			for(int y=0; y<=x; y++) {
+				for(int z=0; z<=y; z++) {
+					for(int a=0; a<=z; a++) {
+						for(int b=0; b<=a; b++) {
+							for(int c=0; c<=b; c++) {
+								for(int d=0; d<=c; d++) {
+									for(int e=0; e<=d; e++) {
+										for(int f=0; f<=e; f++) {
+											for(int g=0; g<=f; g++) {
+												if(!(x==b || y==c || z==d || a==e || b==f || c==g)) {
+													int bf = (1<<x) | (1<<y) | (1<<z) | (1<<a) | (1<<b) | (1<<c) | (1<<d) | (1<<e) | (1<<f);
+													if(!((bf & 0x100F) == 0x100F
+													|| (bf & 0x001F) == 0x001F
+													|| (bf & 0x003E) == 0x003E
+													|| (bf & 0x007C) == 0x007C
+													|| (bf & 0x00F8) == 0x00F8
+													|| (bf & 0x01F0) == 0x01F0
+													|| (bf & 0x03E0) == 0x03E0
+													|| (bf & 0x07C0) == 0x07C0
+													|| (bf & 0x0F80) == 0x0F80
+													|| (bf & 0x1F00) == 0x1F00))
+													{
+														counter++;
+													}
+												}
+											}	
+										}	
+									}	
+								}	
+							}	
+						}	
+					}	
+				}
+			}
 		}
-		return r+1;
+		System.out.println(counter);
 	}
 	
-	public static int possiblePermutationsOfHandSize(int i) {
+	private static int possiblePermutationsOfHandSize(int i) {
 		return factorial(i).divide(factorial(5).multiply(
 				factorial(i - 5))).intValue();
 	}
