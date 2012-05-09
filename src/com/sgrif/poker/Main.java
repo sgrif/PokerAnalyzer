@@ -1,93 +1,12 @@
 package com.sgrif.poker;
 
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.HashMap;
 import java.util.Locale;
-import static com.sgrif.poker.Deck.PRIMES;
 
 public class Main {
-	private static Game g = new Game(0, 10, 0);
+	private static Game g = new Game(0, 9, 0);
 	private static int[] deck = Deck.getDeck();
 
 	public static void main(String[] args) {
-		/*
-		int counter = 0;
-		BitSet bs = new BitSet();
-		HashMap<Long, Boolean> hm = new HashMap<Long, Boolean>();
-		for(int x=0; x<5; x++) {
-			for(int y=0; y<13; y++) {
-				for(int z=0; z<13; z++) {
-					for(int a=0; a<13; a++) {
-						int product = PRIMES[x] * PRIMES[y] * PRIMES[z] * PRIMES[a];
-						if(!bs.get(product) && a!=x) {
-							counter++;
-						}
-						bs.set(product);
-					}
-				}
-			}
-		}
-		System.out.println(counter);
-		counter=0;
-		for(int x=0; x<13; x++) {
-			for(int y=0; y<=x; y++) {
-				for(int z=0; z<=y; z++) {
-					for(int a=0; a<=z; a++) {
-						for(int b=0; b<=a; b++) {
-							for(int c=0; c<=b; c++) {
-								for(int d=0; d<=c; d++) {
-									for(int e=0; e<=d; e++) {
-										for(int f=0; f<=e; f++) {
-											if(x!=b && y!=c && z!=d && a!=e && b!=f) {
-												long product = (long)PRIMES[x] * (long)PRIMES[y] * (long)PRIMES[z] * (long)PRIMES[a] * (long)PRIMES[b] * (long)PRIMES[c] * (long)PRIMES[d] * (long)PRIMES[e] * (long)PRIMES[f];
-												int bf = (1<<x) | (1<<y) | (1<<z) | (1<<a) | (1<<b) | (1<<c) | (1<<d) | (1<<e) | (1<<f);
-												if(null == hm.get(Long.valueOf(product)) && Integer.bitCount(bf) < 9) {
-													counter++;
-													hm.put(Long.valueOf(product), Boolean.TRUE);
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		System.out.println(counter);
-		int counter = 0;
-		HashMap<Long, Boolean> cache = new HashMap<Long, Boolean>();
-		for(int x=0; x<13; x++) {
-			for(int y=0; y<=x; y++) {
-				for(int z=0; z<=y; z++) {
-					for(int a=0; a<=z; a++) {
-						for(int b=0; b<=a; b++) {
-							for(int c=0; c<=b; c++) {
-								for(int d=0; d<=c; d++) {
-									for(int e=0; e<=d; e++) {
-										if(e!=a && d!=z && c!=y && b!=x) {
-											Long product = (long)PRIMES[e] * (long)PRIMES[d] * (long)PRIMES[c] * (long)PRIMES[b] * (long)PRIMES[a] * (long)PRIMES[z] * (long)PRIMES[y] * (long)PRIMES[x];
-											int bf = (1<<e) | (1<<d) | (1<<c) | (1<<b) | (1<<a) | (1<<z) | (1<<y) | (1<<x); 
-											if(null == cache.get(product) && Integer.bitCount(bf) < 8) {
-												if((bf & 0x1F) == 0x1F00
-												&& (bf & 0x003E) != 0x003E
-												) {
-													counter++;
-												}
-												cache.put(product, Boolean.TRUE);
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		System.out.println(counter);*/
 	}
 	
 	private static void test1() {

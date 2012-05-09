@@ -257,7 +257,8 @@ public class Game {
 		System.out.println("Number of excess indexes: " + (-1 - Arrays.binarySearch(products, 1)));
 		System.out.println("Number of straights with pairs: " + test);
 		System.out.println("Number of combinations for straights: " + possiblePairedStraights(cards_playable));
-		System.out.println("I WILL MURDER YOUR FAMILY: " + ((-1 - Arrays.binarySearch(products, 1) - possiblePairedStraights(cards_playable))));
+		System.out.println("Number of illegal straights included: " + ((-1 - Arrays.binarySearch(products, 1) - possiblePairedStraights(cards_playable))));
+		System.out.println("Number of boat/quad straights included: " + (possiblePairedStraights(cards_playable) - test));
 		test(cards_playable);
 	}
 	
@@ -391,6 +392,7 @@ public class Game {
 	 * @return Result of formula
 	 */
 	private static int comRepetition(int max, int count) {
+		if(count < 0) return 0;
 		if(comRepetitionCache[max][count] > 0) return comRepetitionCache[max][count];
 		int ret = factorial(max+count-1).divide(factorial(count).multiply(factorial(max-1))).intValue();
 		comRepetitionCache[max][count] = ret;
@@ -408,6 +410,7 @@ public class Game {
 	 * @return Result of formula
 	 */
 	private static int comUnique(int max, int count) {
+		if(count < 0) return 0;
 		if(comUniqueCache[max][count] > 0) return comUniqueCache[max][count];
 		int ret = factorial(max).divide(factorial(count).multiply(factorial(max - count))).intValue();
 		comUniqueCache[max][count] = ret;
@@ -434,54 +437,25 @@ public class Game {
 	}
 	
 	private static void test(int i) {
+		int x = (comRepetition(5, 3) - comUnique(5, 3)) * comRepetition(12, i-8);
+		x += 5 * (comRepetition(12, i-7) - comUnique(12, i-7));
+		x += comRepetition(12, i-9);
+		
+		System.out.println(x);
+		
+		int y = (comRepetition(12, i-8) - comUnique(12, i-8)) * 5;
+		
 		/*
-		int x = comRepetition(5, 1);
-		System.out.println(x);
-		x *= 5;
-		System.out.println(x);
-		int y = comRepetition(7, 0);
-		y *= 7;
-		x += y;
-		System.out.println(x);
-		*/
-		int counter = 0;
-		for(int x=0; x<13; x++) {
-			for(int y=0; y<=x; y++) {
-				for(int z=0; z<=y; z++) {
-					for(int a=0; a<=z; a++) {
-						for(int b=0; b<=a; b++) {
-							for(int c=0; c<=b; c++) {
-								for(int d=0; d<=c; d++) {
-									for(int e=0; e<=d; e++) {
-										for(int f=0; f<=e; f++) {
-											for(int g=0; g<=f; g++) {
-												if(!(x==b || y==c || z==d || a==e || b==f || c==g)) {
-													int bf = (1<<x) | (1<<y) | (1<<z) | (1<<a) | (1<<b) | (1<<c) | (1<<d) | (1<<e) | (1<<f);
-													if(!((bf & 0x100F) == 0x100F
-													|| (bf & 0x001F) == 0x001F
-													|| (bf & 0x003E) == 0x003E
-													|| (bf & 0x007C) == 0x007C
-													|| (bf & 0x00F8) == 0x00F8
-													|| (bf & 0x01F0) == 0x01F0
-													|| (bf & 0x03E0) == 0x03E0
-													|| (bf & 0x07C0) == 0x07C0
-													|| (bf & 0x0F80) == 0x0F80
-													|| (bf & 0x1F00) == 0x1F00))
-													{
-														counter++;
-													}
-												}
-											}	
-										}	
-									}	
-								}	
-							}	
-						}	
-					}	
+		int counter=0;
+		for(int j=0; j<5; j++) {
+			for(int k=0; k<5; k++) {
+				if(j != k) {
+					for(int l=0; l<12; l++) {
+						counter++;
+					}
 				}
 			}
-		}
-		System.out.println(counter);
+		}*/
 	}
 	
 	private static int possiblePermutationsOfHandSize(int i) {
