@@ -253,13 +253,10 @@ public class Game {
 		}
 		generateNonFlushRankings();
 		associativeSort(products, rankings);
-		//testAll(0, new int[cards_playable]);
-		System.out.println("Number of excess indexes: " + (-1 - Arrays.binarySearch(products, 1)));
-		System.out.println("Number of straights with pairs: " + test);
-		System.out.println("Number of combinations for straights: " + possiblePairedStraights(cards_playable));
-		System.out.println("Number of illegal straights included: " + ((-1 - Arrays.binarySearch(products, 1) - possiblePairedStraights(cards_playable))));
-		System.out.println("Number of boat/quad straights included: " + (possiblePairedStraights(cards_playable) - test));
-		test(cards_playable);
+
+		int excess = -1 - Arrays.binarySearch(products, 1);
+		products = Arrays.copyOfRange(products, excess, products.length);
+		rankings = Arrays.copyOfRange(rankings, excess, rankings.length);
 	}
 	
 	private int test(int from, int current, int counter) {
@@ -333,7 +330,7 @@ public class Game {
 					|| (bf & 0x07C0) == 0x07C0
 					|| (bf & 0x0F80) == 0x0F80
 					|| (bf & 0x1F00) == 0x1F00)
-					/*&& rank < 5864*/) {
+					&& rank < 5864) {
 				unique[bf] = rank;
 				return counter;
 			}
@@ -368,10 +365,10 @@ public class Game {
 	 * more than 4 of a card.
 	 * All combinations with repetition:
 	 * (13+num_cards-1)!/(num_cards!*(13-1)!)
-	 * 
+	 *
 	 * All combinations without repetition:
 	 * 13!/(num_cards!*(13-num_cards)!)
-	 * 
+	 *
 	 * Combinations with more than 4 of a card:
 	 * ((13+num_cards-5-1)!/(num_cards-5)!*(13-1)!)*13
 	 */
@@ -386,7 +383,7 @@ public class Game {
 	 * Calculates the number of unique combinations with repetition of count cards within max values
 	 * Formula:
 	 * (max+count-1)!/(count!*(max-1)!)
-	 * 
+	 *
 	 * @param max Number of possible values for the card between 1 and 13
 	 * @param count Number of cards to calculate for
 	 * @return Result of formula
@@ -401,10 +398,11 @@ public class Game {
 	
 	/**
 	 * Calculates the number of unique combinations without repetition of count cards within max
-	 * values. 
+	 * values.
+	 *
 	 * Formula:
 	 * max!/(count!*(max-count)!)
-	 * 
+	 *
 	 * @param max Number of possible values for the card between 1 and 13
 	 * @param count Number of cards to calculate for
 	 * @return Result of formula
@@ -434,28 +432,6 @@ public class Game {
 		ret += comRepetition(13, i-5) - comUnique(8, i-5); //Ace high straight
 		pairedStraightCache[i] = ret;
 		return ret;
-	}
-	
-	private static void test(int i) {
-		int x = (comRepetition(5, 3) - comUnique(5, 3)) * comRepetition(12, i-8);
-		x += 5 * (comRepetition(12, i-7) - comUnique(12, i-7));
-		x += comRepetition(12, i-9);
-		
-		System.out.println(x);
-		
-		int y = (comRepetition(12, i-8) - comUnique(12, i-8)) * 5;
-		
-		/*
-		int counter=0;
-		for(int j=0; j<5; j++) {
-			for(int k=0; k<5; k++) {
-				if(j != k) {
-					for(int l=0; l<12; l++) {
-						counter++;
-					}
-				}
-			}
-		}*/
 	}
 	
 	private static int possiblePermutationsOfHandSize(int i) {

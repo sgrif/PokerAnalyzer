@@ -1,20 +1,20 @@
 package com.sgrif.poker;
 
 import java.util.Locale;
+import static com.sgrif.poker.Game.*;
 
 public class Main {
-	private static Game g = new Game(0, 9, 0);
+	//private static Game g = new Game(0, 8, 0);
 	private static int[] deck = Deck.getDeck();
 
 	public static void main(String[] args) {
+		new Game(0, 8, 0);
 	}
 	
 	private static void test1() {
-		g.getRank(deck[12], deck[11], deck[10], deck[9], deck[7], deck[6]);
 	}
 	
 	private static void test2() {
-		g.getRank(deck[12], deck[11], deck[10], deck[9], deck[7], deck[6]);
 	}
 	
 	private static void bench(boolean comp, int times) {
