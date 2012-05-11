@@ -34,7 +34,10 @@ public class Game {
 	private int[] rankings;
 	private int[] unique;
 	private int[] flushes;
+	private int[] hasFlush;
 	private int[][] permutations = {{0, 1, 2, 3, 4}};
+
+	private int[][] players;
 	
 	public static final int MAX_UNIQUE_INDEX = 0x1FFF + 1;
 	public static final int MAX_UNIQUE_INDEX5 = 0x1F00 + 1;
@@ -71,7 +74,10 @@ public class Game {
 			generateRankings();
 		}
 	}
-	
+
+	public void addPlayer(int ... cards) {
+	}
+
 	private void generateRankings5() {
 		int i, j, k, l, m;
 		int n=1;
@@ -209,7 +215,7 @@ public class Game {
 		
 		associativeSort(products5, rankings5);
 	}
-	
+
 	public int getRanking5(int c0, int c1, int c2, int c3, int c4) {
 		int q = (c0 >> 16) | (c1 >> 16) | (c2 >> 16) | (c3 >> 16) | (c4 >> 16);
 		if((c0 & c1 & c2 & c3 & c4 & 0xF000) > 0) return flushes5[q];
@@ -217,7 +223,7 @@ public class Game {
 		int x = Arrays.binarySearch(products5, ((c0 & 0xFF) * (c1 & 0xFF) * (c2 & 0xFF) * (c3 & 0xFF) * (c4 & 0xFF)));
 		return rankings5[x];
 	}
-	
+
 	public int getRank(int c0, int c1, int c2, int c3, int c4, int c5, int ... cards) {
 		int q = (c0 >> 16) | (c1 >> 16) | (c2 >> 16) | (c3 >> 16) | (c4 >> 16) | (c5 >> 16);
 		long product = (c0 & 0xFF) * (c1 & 0xFF) * (c2 & 0xFF) * (c3 & 0xFF) * (c4 & 0xFF) * (long)(c5 & 0xFF);
@@ -230,8 +236,8 @@ public class Game {
 		int x = Arrays.binarySearch(products, product);
 		return rankings[x];
 	}
-	
-	public int getBestOf(int ... cards) {
+
+	private int getBestOf(int ... cards) {
 		int best = 0;
 		int current;
 		for(int[] p : permutations) {
@@ -246,19 +252,20 @@ public class Game {
 		if(best > 5853 && best < 5864 && Integer.bitCount(bf) < cards_playable) test++;
 		return best;
 	}
-	
+
 	private void generateRankings() {
 		if(cards_playable == 5) {
 			return;
 		}
 		generateNonFlushRankings();
+		generateFlushRankings();
 		associativeSort(products, rankings);
 
 		int excess = -1 - Arrays.binarySearch(products, 1);
 		products = Arrays.copyOfRange(products, excess, products.length);
 		rankings = Arrays.copyOfRange(rankings, excess, rankings.length);
 	}
-	
+
 	private int test(int from, int current, int counter) {
 		if(from == cards_playable-5) {
 			counter++;
@@ -292,7 +299,7 @@ public class Game {
 		}
 	}
 	
-	public int generatePermutations(int from, int count, int[] cards, int index) {
+	private int generatePermutations(int from, int count, int[] cards, int index) {
 		if(count == 5) {
 			permutations[index] = Arrays.copyOf(cards, cards.length);
 			index++;
@@ -308,7 +315,11 @@ public class Game {
 	private void generatePermutations() {
 		generatePermutations(0, 0, new int[5], 0);
 	}
-	
+
+	private void generateNonFlushRankings() {
+		generateNonFlushRankings(0, 0, new int[cards_playable], 0, 4);
+	}
+
 	private int generateNonFlushRankings(int from, int current, int[] cards, int counter, int match) {
 		if(from == cards_playable) {
 			int bf = 0;
@@ -354,11 +365,10 @@ public class Game {
 		}
 		return counter;
 	}
-	
-	private void generateNonFlushRankings() {
-		generateNonFlushRankings(0, 0, new int[cards_playable], 0, 4);
+
+	private void generateFlushRankings() {
 	}
-	
+
 	/*
 	 * Formula for all non-flush hands is calculated by determining all possible combinations with
 	 * repetition, subtracting all combinations without repetition, and subtracting combinations
@@ -373,7 +383,7 @@ public class Game {
 	 * ((13+num_cards-5-1)!/(num_cards-5)!*(13-1)!)*13
 	 */
 	private static int possibleNonUnique(int i) {
-		if(nonUniqueCache[i] > 0) return nonUniqueCache[i];		
+		if(nonUniqueCache[i] > 0) return nonUniqueCache[i];
 		int rv = comRepetition(13, i) - comRepetition(13, i-5)*13 - comUnique(13, i);
 		nonUniqueCache[i] = rv;
 		return rv;
@@ -432,6 +442,25 @@ public class Game {
 		ret += comRepetition(13, i-5) - comUnique(8, i-5); //Ace high straight
 		pairedStraightCache[i] = ret;
 		return ret;
+	}
+
+	private static void test(int i) {
+		int x=0;
+
+		x += comUnique(5, i-5);
+		x += 5 * comUnique(7, i-7);
+		x += comUnique(5, 2) * (comRepetition(7, i-7) - (comRepetition(7, i-9) * 7));
+		//x += (comRepetition(5, i-5) - (comRepetition(5, i-8)*5)) * (comRepetition(7, i-7) - (comRepetition(7, i-10) * 7));
+		x += 5 * (comRepetition(7, i-6) - (comRepetition(7, i-8)*7));
+		x += comRepetition(7, i-5) - comUnique(7, i-5) - (comRepetition(7, i-9) * 7);
+		x *= 9;
+		x += comUnique(5, i-5);
+		x += 5 * comUnique(8, i-7);
+		x += comUnique(5, 2) * (comRepetition(8, i-7) - (comRepetition(8, i-9) * 8));
+		//x += (comRepetition(5, i-5) - (comRepetition(5, i-8)*5)) * (comRepetition(7, i-7) - (comRepetition(7, i-10) * 7));
+		x += 5 * (comRepetition(8, i-6) - (comRepetition(8, i-8)*8));
+		x += comRepetition(8, i-5) - comUnique(8, i-5) - (comRepetition(8, i-9) * 8);
+		System.out.println(x);
 	}
 	
 	private static int possiblePermutationsOfHandSize(int i) {

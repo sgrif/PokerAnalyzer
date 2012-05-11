@@ -4,17 +4,18 @@ import java.util.Locale;
 import static com.sgrif.poker.Game.*;
 
 public class Main {
-	//private static Game g = new Game(0, 8, 0);
 	private static int[] deck = Deck.getDeck();
 
 	public static void main(String[] args) {
-		new Game(0, 8, 0);
+		bench(false, 1);
 	}
 	
 	private static void test1() {
+		new Game(0, 8, 0);
 	}
 	
 	private static void test2() {
+		g.getRanking5(deck[0], deck[1], deck[2], deck[3], deck[13]);
 	}
 	
 	private static void bench(boolean comp, int times) {
